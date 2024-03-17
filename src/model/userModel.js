@@ -20,6 +20,11 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    is_completed_personal_info: {
+      type: Boolean,
+      default: false,
+    },
+
     personal_info: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "PersonalInfo",
