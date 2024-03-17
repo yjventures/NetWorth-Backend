@@ -14,4 +14,8 @@ router.post("/analyze-document", userController.analyzeDocument);
 
 router.post("/upload", upload.single("file"), uploadImageUtils.uploadImage);
 
+router.post("/user/login", userController.login);
+router.post("/user/varify-login", userController.verifyLoginOTP);
+router.post("/user/access-token", userController.generateAccessToken)
+
 module.exports = router;
