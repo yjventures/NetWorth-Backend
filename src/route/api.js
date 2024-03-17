@@ -5,7 +5,7 @@ const multer = require("multer");
 const uploadImageUtils = require("../utils/uploadImageUtils");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
-
+const authVerifyMiddleware = require("../middleware/AuthVerifyMiddleware")
 
 router.post("/signUp", userController.userRegistration);
 router.post("/varify-email", userController.verifyRegistrationOTP);
@@ -17,5 +17,5 @@ router.post("/upload", upload.single("file"), uploadImageUtils.uploadImage);
 router.post("/user/login", userController.login);
 router.post("/user/varify-login", userController.verifyLoginOTP);
 router.post("/user/access-token", userController.generateAccessToken)
-
+router.put("/user/personal-info", authVerifyMiddleware.authMiddleware, userController.updatePersonalInfo)
 module.exports = router;

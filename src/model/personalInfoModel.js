@@ -21,13 +21,13 @@ const personalInfoSchema = mongoose.Schema(
       type: String,
     },
     bio: {
-      type: Number,
+      type: String,
     },
     company_name: {
       type: String,
     },
     company_logo: {
-      type: Number,
+      type: String,
     },
     designation: {
       type: String,

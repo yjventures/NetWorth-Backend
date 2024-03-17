@@ -275,40 +275,76 @@ exports.verifyLoginOTP = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.generateAccessToken = catchAsync(async (req, res, next)=>{
-    const { refreshToken } = req.body;
+exports.generateAccessToken = catchAsync(async (req, res, next) => {
+  const { refreshToken } = req.body;
 
-    // Verify the refresh token and get userId
-    const verificationResult = await verifyRefreshToken.verifyRefresh(
-      refreshToken
-    );
-    // console.log(verificationResult);
+  // Verify the refresh token and get userId
+  const verificationResult = await verifyRefreshToken.verifyRefresh(
+    refreshToken
+  );
+  // console.log(verificationResult);
 
-    if (!verificationResult.valid) {
-        return next(new ErrorHandler(401, "Invalid token, try logging in again"))
-    }
+  if (!verificationResult.valid) {
+    return next(new ErrorHandler(401, "Invalid token, try logging in again"));
+  }
 
-    const { userId } = verificationResult;
-    // console.log("User ID:", userId);
+  const { userId } = verificationResult;
+  // console.log("User ID:", userId);
 
-    // Find the user based on userId
-    const user = await userModel.findById(userId);
-    // console.log("User:", user);
+  // Find the user based on userId
+  const user = await userModel.findById(userId);
+  // console.log("User:", user);
 
-    if (!user) {
-      return next(new ErrorHandler(400, "User not found"))
-    }
+  if (!user) {
+    return next(new ErrorHandler(400, "User not found"));
+  }
 
-    // Generate a new access token
-    const accessToken = jwt.sign(
-      {
-        userId: user._id,
-        email: user.email,
-        role: user.role,
-      },
-      process.env.SECRET_KEY,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
-    );
+  // Generate a new access token
+  const accessToken = jwt.sign(
+    {
+      userId: user._id,
+      email: user.email,
+      role: user.role,
+    },
+    process.env.SECRET_KEY,
+    { expiresIn: process.env.JWT_EXPIRES_IN }
+  );
 
-    return res.status(200).json({ success: true, accessToken });
-})
+  return res.status(200).json({ success: true, accessToken });
+});
+
+//update personal info
+exports.updatePersonalInfo = catchAsync(async (req, res, next) => {
+  const userId = req.headers.userId;
+  const reqBody = req.body;
+//   console.log(reqBody)
+
+  // Check if the user exists
+  const user = await userModel.findById(userId);
+  if (!user) {
+    return next(new ErrorHandler(400, "You Are Not Authorized"));
+  }
+
+  const personalInfoId = user?.personal_info;
+
+  // Find and update the personal information
+  const updatedPersonalInfo = await personalInfoModel.findByIdAndUpdate(
+    personalInfoId,
+    reqBody,
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedPersonalInfo) {
+    return next(new ErrorHandler(404, "Personal information not found"));
+  }
+
+  //Optionally, update user's personal_info reference
+  user.is_completed_personal_info = true;
+  await user.save();
+
+  return res.status(200).json({
+    status: true,
+    message: "Personal information updated successfully",
+    data: updatedPersonalInfo,
+  });
+});
