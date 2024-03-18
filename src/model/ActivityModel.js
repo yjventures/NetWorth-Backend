@@ -32,6 +32,6 @@ const activitySchema = mongoose.Schema(
   }
 );
 
-const activityModel = mongoose.model("activity", activitySchema);
+const activityModel = mongoose.model("Activity", activitySchema);
 
 module.exports = activityModel;

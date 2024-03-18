@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const cardSchema = mongoose.Schema(
   {
     design: {
-      enum: ["linear","curved","Tilted"]
+      enum: ["linear", "curved", "Tilted"],
     },
     color: {
       type: String,
