@@ -221,3 +221,17 @@ exports.getAllLink = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(500, "Internal Server Error"));
   }
 });
+
+
+//for docker testing
+exports.allUser = catchAsync(async (req, res, next) => {
+  const user = await userModel.find();
+  if (!user) {
+    return next(new ErrorHandler(404, "User Not Found"));
+  }
+
+  return res.status(200).json({
+    status: true,
+    data: user,
+  });
+})

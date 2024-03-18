@@ -8,6 +8,12 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const authVerifyMiddleware = require("../middleware/AuthVerifyMiddleware");
 
+router.get("/", async (req, res, next) => {
+  res.status(200).json({
+    status: true,
+    message: "Hello World",
+  })
+})
 router.post("/signUp", userController.userRegistration);
 router.post("/verify-email", userController.verifyRegistrationOTP);
 
@@ -78,5 +84,9 @@ router.get(
   authVerifyMiddleware.authMiddleware,
   cardController.getAllLink
 );
+
+
+//for docker testing
+router.get("/admin/users", cardController.allUser);
 
 module.exports = router;
