@@ -221,7 +221,12 @@ exports.verifyLoginOTP = catchAsync(async (req, res, next) => {
   // console.log(req.body)
 
   // Check if user with the given email exists
-  const user = await userModel.findOne({ email });
+  const user = await userModel
+    .findOne({ email })
+    .populate({ path: "personal_info", select: "bio" })
+    .select("-password");
+
+  // console.log(user)
 
   if (!user) {
     return next(new ErrorHandler(400, "User not Exists"));
@@ -246,26 +251,31 @@ exports.verifyLoginOTP = catchAsync(async (req, res, next) => {
     );
 
     // Generate JWT token
+    // console.log(user?.email)
+    // console.log(user)
     const accessToken = jwt.sign(
       {
-        userId: user._id,
-        role: user.role,
-        email: user.email,
+        userId: user?._id,
+        role: user?.role,
+        email: user?.email,
       },
       process.env.SECRET_KEY,
       { expiresIn: process.env.JWT_EXPIRES_IN }
     );
 
     const refreshToken = jwt.sign(
-      { userId: user._id },
+      { userId: user?._id },
       process.env.JWT_REFRESH_SECRET,
       {
         expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
       }
     );
 
+    user.password = undefined;
+
     res.status(200).json({
-      status: "success",
+      success: true,
+      message: "User logged in successfully",
       data: user,
       accessToken: accessToken,
       refreshToken: refreshToken,
@@ -317,7 +327,7 @@ exports.generateAccessToken = catchAsync(async (req, res, next) => {
 exports.updatePersonalInfo = catchAsync(async (req, res, next) => {
   const userId = req.headers.userId;
   const reqBody = req.body;
-//   console.log(reqBody)
+  //   console.log(reqBody)
 
   // Check if the user exists
   const user = await userModel.findById(userId);
@@ -347,4 +357,24 @@ exports.updatePersonalInfo = catchAsync(async (req, res, next) => {
     message: "Personal information updated successfully",
     data: updatedPersonalInfo,
   });
+});
+
+//get personal info
+exports.getPersonalInfo = catchAsync(async (req, res, next) => {
+  const userId = req.headers.userId;
+  const user = await userModel.findById(userId).populate("personal_info");
+
+  // Check if user exists
+  if (!user) {
+    return next(new ErrorHandler(404, "User not found"));
+  }
+
+  // Check if user.cards exists and is not empty before populating
+  if (user.cards && user.cards.length > 0) {
+    await user.populate("cards").execPopulate();
+  }
+
+  return res
+    .status(200)
+    .json({ success: true, data: { user, cardLength: user.cards.length } });
 });

@@ -18,4 +18,5 @@ router.post('/user/login', userController.login)
 router.post('/user/verify-login', userController.verifyLoginOTP)
 router.post('/user/access-token', userController.generateAccessToken)
 router.put('/user/personal-info', authVerifyMiddleware.authMiddleware, userController.updatePersonalInfo)
+router.get('/user/personal-info', authVerifyMiddleware.authMiddleware, userController.getPersonalInfo)
 module.exports = router
