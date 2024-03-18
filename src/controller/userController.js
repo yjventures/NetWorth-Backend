@@ -378,3 +378,103 @@ exports.getPersonalInfo = catchAsync(async (req, res, next) => {
     .status(200)
     .json({ success: true, data: { user, cardLength: user.cards.length } });
 });
+
+//forget password related controller
+exports.RecoverVerifyEmail = catchAsync(async (req, res) => {
+  const email = req.params.email;
+
+  // OTP code generation
+  const OTPCode = otpGenerator.generate(4, {
+    digits: true,
+    alphabets: false,
+    lowerCaseAlphabets: false,
+    upperCaseAlphabets: false,
+    specialChars: false,
+  });
+
+  // Check if the user exists
+  const userCount = await userModel.aggregate([
+    { $match: { email: email } },
+    { $count: "total" },
+  ]);
+
+  if (userCount.length > 0) {
+    // Insert OTP into the database
+    await OTPModel.create({ email: email, otp: OTPCode });
+
+    // Send email with OTP
+    const emailMessage = `Your Pin Code is: ${OTPCode}`;
+    const emailSubject = "RFQ Verification System";
+    const emailSend = await SendEmailUtils(email, emailMessage, emailSubject);
+
+    res.status(200).json({ status: true, data: emailSend });
+  } else {
+    return next(new ErrorHandler(404, "User Not Found"));
+  }
+});
+
+exports.recoverOTPVerify = catchAsync(async (req, res) => {
+  //find email and otp from the parameter
+  let email = req.params.email;
+  let OTPCode = req.params.otp;
+  let status = 0;
+
+  //first otp count
+  let OTPCount = await OTPModel.aggregate([
+    { $match: { email: email, otp: OTPCode, status: status } },
+    { $count: "total" },
+  ]);
+  if (OTPCount.length > 0) {
+    let otpUpdate = await OTPModel.updateOne(
+      { email: email, otp: OTPCode, status: status },
+      {
+        email: email,
+        otp: OTPCode,
+        status: 1,
+      }
+    );
+    res.status(200).json({ status: true, data: otpUpdate });
+  } else {
+    return next(new ErrorHandler(402, "Invalid OTP Code"));
+  }
+});
+
+exports.RecoverResetPassword = catchAsync(async (req, res) => {
+  let email = req.body["email"];
+  let OTPCode = req.body["OTP"];
+  let newPassword = req.body["password"];
+
+  let status = 1;
+
+  let OTPUsedCount = await OTPModel.aggregate([
+    { $match: { email: email, otp: OTPCode, status: status } },
+    { $count: "total" },
+  ]);
+
+  if (OTPUsedCount.length > 0) {
+    let password = newPassword;
+
+    if (!regex.test(password)) {
+      return res.status(400).json({
+        status: "fail",
+        message:
+          "Invalid password format. Password must have at least one lowercase letter, one uppercase letter, one digit, one special character, and be 8-15 characters long.",
+      });
+    }
+
+    const hashedPassword = await userBcrypt.hashPassword(password);
+    let passwordUpdate = await userModel.updateOne(
+      { email: email },
+      {
+        password: hashedPassword,
+      }
+    );
+    res.status(200).json({
+      status: "success",
+      message: "",
+      data: passwordUpdate,
+    });
+  } else {
+    return next(new ErrorHandler(402, "OTP Code is not valid"));
+  }
+});
