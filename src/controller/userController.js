@@ -370,9 +370,9 @@ exports.getPersonalInfo = catchAsync(async (req, res, next) => {
   }
 
   // Check if user.cards exists and is not empty before populating
-  if (user.cards && user.cards.length > 0) {
-    await user.populate("cards").execPopulate();
-  }
+  // if (user.cards && user.cards.length > 0) {
+  //   await user.populate("cards").execPopulate();
+  // }
 
   return res
     .status(200)
