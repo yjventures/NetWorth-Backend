@@ -91,7 +91,7 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(404, "This User Not Found"));
   }
 
-  console.log(user.email)
+  // console.log(user.email)
   const emailMessage = `Sorry, Your account has been Deleted from NetWorth Hub`;
   const emailSubject = "NetWorth";
   const emailSend = await SendEmailUtils(
