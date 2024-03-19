@@ -1,9 +1,10 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose')
 
 const cardSchema = mongoose.Schema(
   {
+    card_name: String,
     design: {
-      enum: ["linear", "curved", "Tilted"],
+      enum: ['linear', 'curved', 'Tilted'],
     },
     color: {
       type: String,
@@ -17,7 +18,6 @@ const cardSchema = mongoose.Schema(
     cover_image: {
       type: String,
     },
-
     bio: {
       type: String,
     },
@@ -43,31 +43,31 @@ const cardSchema = mongoose.Schema(
     links: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Link",
+        ref: 'Link',
       },
     ],
     activities: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Activity",
+        ref: 'Activity',
       },
     ],
     friend_list: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: 'User',
       },
     ],
     incoming_friend_request: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: 'User',
       },
     ],
     outgoing_friend_request: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: 'User',
       },
     ],
     is_private: {
@@ -84,8 +84,8 @@ const cardSchema = mongoose.Schema(
     versionKey: false,
     timestamps: true,
   }
-);
+)
 
-const cardModel = mongoose.model("Card", cardSchema);
+const cardModel = mongoose.model('Card', cardSchema)
 
-module.exports = cardModel;
+module.exports = cardModel
