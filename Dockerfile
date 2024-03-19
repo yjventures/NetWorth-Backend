@@ -1,18 +1,24 @@
-FROM node:alpine
+# --- Stage 1: Build Stage ---
+FROM node:alpine AS build
 
 WORKDIR /app
 
 COPY package*.json ./
-# Copy .env file
 COPY .env ./
+
+RUN npm install --quiet
+
+COPY . .
+
+# --- Stage 2: Production Stage ---
+FROM node:alpine AS production
+
+WORKDIR /app
+
+COPY --from=build /app .
 
 RUN npm install -g nodemon
 RUN npm list -g --depth 0
-
-RUN npm install
-
-
-COPY . .
 
 EXPOSE 5000
 
