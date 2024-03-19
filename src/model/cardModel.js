@@ -27,6 +27,7 @@ const cardSchema = mongoose.Schema(
     company_logo: {
       type: String,
     },
+    address: String,
     email: [
       {
         type: String,
