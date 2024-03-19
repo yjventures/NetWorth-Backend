@@ -1,5 +1,6 @@
 const { catchAsync } = require("../middleware/catchAsyncError");
 const userModel = require("../model/userModel");
+const SendEmailUtils = require("../utils/SendEmailUtils");
 const ErrorHandler = require("../utils/errorHandler");
 const userBcrypt = require("../utils/userBcrypt");
 const jwt = require("jsonwebtoken");
@@ -75,7 +76,7 @@ exports.getUserDetails = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteUser = catchAsync(async (req, res, next) => {
-//  console.log("clicked")
+  //  console.log("clicked")
   const userId = req.params.userId;
   const role = req.headers.role;
 
@@ -83,12 +84,21 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(401, "You Are Not Authorized"));
   }
 
-  const user =await userModel.findByIdAndDelete(userId);
+  const user = await userModel.findByIdAndDelete(userId);
 
-//   console.log(user)
+  //   console.log(user)
   if (!user) {
     return next(new ErrorHandler(404, "This User Not Found"));
   }
+
+  console.log(user.email)
+  const emailMessage = `Sorry, Your account has been Deleted from NetWorth Hub`;
+  const emailSubject = "NetWorth";
+  const emailSend = await SendEmailUtils(
+    user.email,
+    emailMessage,
+    emailSubject
+  );
 
   return res.status(200).json({
     status: true,
