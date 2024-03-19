@@ -7,6 +7,8 @@ const uploadImageUtils = require("../utils/uploadImageUtils");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const authVerifyMiddleware = require("../middleware/AuthVerifyMiddleware");
+const adminController = require("../controller/adminController")
+
 
 router.get("/", async (req, res, next) => {
   res.status(200).json({
@@ -85,8 +87,11 @@ router.get(
   cardController.getAllLink
 );
 
+//admin
+router.post("/admin/login", adminController.adminLogin)
+router.get("/admin/users",authVerifyMiddleware.adminMiddleware, adminController.allUser);
 
-//for docker testing
-router.get("/admin/users", cardController.allUser);
+router.get("/admin/users/:userId",authVerifyMiddleware.adminMiddleware, adminController.getUserDetails);
 
+router.delete("/admin/users/:userId",authVerifyMiddleware.adminMiddleware, adminController.deleteUser);
 module.exports = router;

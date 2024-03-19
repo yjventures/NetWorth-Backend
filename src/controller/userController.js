@@ -178,7 +178,7 @@ exports.login = catchAsync(async (req, res, next) => {
   const user = await userModel.findOne({ email }).select("+password");
 
   if (!user) {
-    return next(new ErrorHandler(400, "User Already Exists"));
+    return next(new ErrorHandler(400, "User Not Exists"));
   }
 
   const match = await userBcrypt.comparePassword(password, user.password);
