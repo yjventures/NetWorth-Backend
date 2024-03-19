@@ -470,7 +470,7 @@ exports.RecoverResetPassword = catchAsync(async (req, res) => {
       }
     );
     res.status(200).json({
-      status: "success",
+      status: true,
       message: "",
       data: passwordUpdate,
     });
