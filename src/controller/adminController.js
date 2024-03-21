@@ -41,15 +41,52 @@ exports.adminLogin = catchAsync(async (req, res, next) => {
 });
 
 exports.allUser = catchAsync(async (req, res, next) => {
-  const user = await userModel.find();
-  if (!user) {
-    return next(new ErrorHandler(404, "User Not Found"));
+  // Pagination
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  // Sorting
+  let sortQuery = {};
+  if (req.query.sortBy && req.query.sortOrder) {
+    sortQuery[req.query.sortBy] = req.query.sortOrder === "desc" ? -1 : 1;
+  } else {
+    sortQuery.name = 1;
   }
 
-  return res.status(200).json({
+  // Filtering by email
+  let filterQuery = {};
+  if (req.query.email) {
+    filterQuery.email = { $regex: new RegExp(req.query.email, "i") };
+  }
+
+  const totalUsers = await userModel.countDocuments(filterQuery);
+
+  const user = await userModel
+    .find(filterQuery)
+    .sort(sortQuery)
+    .skip(skip)
+    .limit(limit)
+    .populate({ path: "personal_info", select: "name profile_image" });
+
+  if (user.length === 0) {
+    return next(new ErrorHandler(404, "No users found"));
+  }
+
+  const totalPages = Math.ceil(totalUsers / limit);
+
+  const responseData = {
     status: true,
     data: user,
-  });
+    page: page,
+    limit: limit,
+    sortBy: req.query.sortBy,
+    sortOrder: req.query.sortOrder || "asc",
+    currentPage: user.length === 0 ? 0 : page,
+    totalPages: totalPages,
+  };
+
+  return res.status(200).json(responseData);
 });
 
 exports.getUserDetails = catchAsync(async (req, res, next) => {

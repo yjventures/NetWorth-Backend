@@ -8,7 +8,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const authVerifyMiddleware = require("../middleware/AuthVerifyMiddleware");
 const adminController = require("../controller/adminController")
-
+const connectionController = require("../controller/connectionController")
 
 router.get("/", async (req, res, next) => {
   res.status(200).json({
@@ -89,9 +89,13 @@ router.get(
 
 //admin
 router.post("/admin/login", adminController.adminLogin)
-router.get("/admin/users",authVerifyMiddleware.adminMiddleware, adminController.allUser);
+router.get("/admin/users", adminController.allUser);
 
 router.get("/admin/users/:userId",authVerifyMiddleware.adminMiddleware, adminController.getUserDetails);
 
 router.delete("/admin/users/:userId",authVerifyMiddleware.adminMiddleware, adminController.deleteUser);
+
+// router.get("/invite-via-email",connectionController.sendInvitationViaEmail)
+
+// router.get("/search", connectionController.searchContact)
 module.exports = router;

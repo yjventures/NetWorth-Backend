@@ -8,7 +8,6 @@ const { connectToDB } = require("./src/config/dbConnection");
 //security middleware lib import
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
-const xss = require("xss-clean");
 const cors = require("cors");
 const { errorMiddleware } = require("./src/middleware/errorMiddleware");
 
@@ -19,7 +18,7 @@ app.use(helmet());
 app.use(express.json());
 app.use(cors());
 app.use(mongoSanitize());
-app.use(xss());
+
 
 //database connection
 connectToDB();

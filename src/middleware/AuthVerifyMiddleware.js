@@ -22,9 +22,11 @@ exports.adminMiddleware = (req, res, next) => {
   let authorization = req.headers["authorization"];
   let token = authorization?.split(" ")[1];
 
+  // console.log(token)
   jwt.verify(token, process.env.ADMIN_SECRET_KEY, (err, decoded) => {
     if (err) {
       res.status(401).json({ status: "You Are Not authorized As Admin" });
+      // console.log(err)
     } else {
       const userId = decoded["userId"];
       const email = decoded["email"];
