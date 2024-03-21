@@ -186,33 +186,56 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(400, "Password Is incorrect"));
   }
 
-  const OTPCode = otpGenerator.generate(4, {
-    digits: true,
-    alphabets: false,
-    lowerCaseAlphabets: false,
-    upperCaseAlphabets: false,
-    specialChars: false,
-  });
+  // const OTPCode = otpGenerator.generate(4, {
+  //   digits: true,
+  //   alphabets: false,
+  //   lowerCaseAlphabets: false,
+  //   upperCaseAlphabets: false,
+  //   specialChars: false,
+  // });
 
-  const userCount = await userModel.aggregate([
-    { $match: { email: email } },
-    { $count: "total" },
-  ]);
+  // const userCount = await userModel.aggregate([
+  //   { $match: { email: email } },
+  //   { $count: "total" },
+  // ]);
 
-  if (userCount.length > 0) {
-    // Insert OTP into the database
-    await OTPModel.create({ email: email, otp: OTPCode });
+  // if (userCount.length > 0) {
+  //   // Insert OTP into the database
+  //   await OTPModel.create({ email: email, otp: OTPCode });
 
-    // Send email with OTP
-    const emailMessage = `Your Pin Code is: ${OTPCode}`;
-    const emailSubject = "NetWorth";
-    const emailSend = await SendEmailUtils(email, emailMessage, emailSubject);
+  //   // Send email with OTP
+  //   const emailMessage = `Your Pin Code is: ${OTPCode}`;
+  //   const emailSubject = "NetWorth";
+  //   const emailSend = await SendEmailUtils(email, emailMessage, emailSubject);
 
-    user.password = undefined;
-    res
-      .status(200)
-      .json({ status: true, message: "Check Email For OTP verification" });
-  }
+  const accessToken = jwt.sign(
+    {
+      userId: user?._id,
+      role: user?.role,
+      email: user?.email,
+    },
+    process.env.SECRET_KEY,
+    { expiresIn: process.env.JWT_EXPIRES_IN }
+  );
+
+  const refreshToken = jwt.sign(
+    { userId: user?._id },
+    process.env.JWT_REFRESH_SECRET,
+    {
+      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+    }
+  );
+
+  user.password = undefined;
+  res
+    .status(200)
+    .json({
+      status: true,
+      message: "login successful",
+      data: user,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    });
 });
 
 //verify login
