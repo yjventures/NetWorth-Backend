@@ -41,53 +41,67 @@ exports.adminLogin = catchAsync(async (req, res, next) => {
 });
 
 exports.allUser = catchAsync(async (req, res, next) => {
-  // Pagination
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
+  try {
+    // Pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-  // Sorting
-  let sortQuery = {};
-  if (req.query.sortBy && req.query.sortOrder) {
-    sortQuery[req.query.sortBy] = req.query.sortOrder === "desc" ? -1 : 1;
-  } else {
-    sortQuery.name = 1;
+   
+    let sortQuery = { createdAt: -1 }; 
+    if (req.query.sortBy && req.query.sortOrder) {
+      sortQuery[req.query.sortBy] = req.query.sortOrder === "desc" ? -1 : 1;
+    }
+
+    let filterQuery = {};
+    if (req.query.search) {
+      filterQuery.$or = [
+        { email: { $regex: new RegExp(req.query.search, "i") } },
+        { "personal_info.name": { $regex: new RegExp(req.query.search, "i") } }
+      ];
+    }
+
+
+    const totalUsers = await userModel.countDocuments(filterQuery);
+
+    const users = await userModel
+      .find(filterQuery)
+      .sort(sortQuery)
+      .skip(skip)
+      .limit(limit)
+      .populate({ path: "personal_info", select: "name profile_image" });
+
+    if (users.length === 0) {
+      return res.status(200).json({
+        status: false,
+        message: "No users found",
+        data: []
+      });
+    }
+
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    const responseData = {
+      status: true,
+      data: users,
+      metaData: {
+        totalUser: totalUsers,
+        page: page,
+        limit: limit,
+        sortBy: req.query.sortBy || "createdAt", // Default sortBy to createdAt
+        sortOrder: req.query.sortOrder || "desc", // Default sortOrder to desc
+        currentPage: page,
+        totalPages: totalPages,
+      },
+    };
+
+    return res.status(200).json(responseData);
+  } catch (error) {
+    return next(error); // Pass any caught errors to the error handling middleware
   }
-
-  // Filtering by email
-  let filterQuery = {};
-  if (req.query.email) {
-    filterQuery.email = { $regex: new RegExp(req.query.email, "i") };
-  }
-
-  const totalUsers = await userModel.countDocuments(filterQuery);
-
-  const user = await userModel
-    .find(filterQuery)
-    .sort(sortQuery)
-    .skip(skip)
-    .limit(limit)
-    .populate({ path: "personal_info", select: "name profile_image" });
-
-  if (user.length === 0) {
-    return next(new ErrorHandler(404, "No users found"));
-  }
-
-  const totalPages = Math.ceil(totalUsers / limit);
-
-  const responseData = {
-    status: true,
-    data: user,
-    page: page,
-    limit: limit,
-    sortBy: req.query.sortBy,
-    sortOrder: req.query.sortOrder || "asc",
-    currentPage: user.length === 0 ? 0 : page,
-    totalPages: totalPages,
-  };
-
-  return res.status(200).json(responseData);
 });
+
+
 
 exports.getUserDetails = catchAsync(async (req, res, next) => {
   const userId = req.params.userId;
