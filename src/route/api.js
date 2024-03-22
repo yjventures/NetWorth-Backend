@@ -95,7 +95,7 @@ router.get("/admin/users/:userId",authVerifyMiddleware.adminMiddleware, adminCon
 
 router.delete("/admin/users/:userId",authVerifyMiddleware.adminMiddleware, adminController.deleteUser);
 
-// router.get("/invite-via-email",connectionController.sendInvitationViaEmail)
+router.post("/invite-via-email",connectionController.sendInvitationViaEmail)
 
-// router.get("/search", connectionController.searchContact)
+router.get("/search", connectionController.searchContact)
 module.exports = router;
