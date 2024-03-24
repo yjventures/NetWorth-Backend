@@ -7,8 +7,9 @@ const SendEmailUtils = require("../utils/SendEmailUtils");
 const { encryptData } = require("../utils/encryptAndDecryptUtils");
 const ErrorHandler = require("../utils/errorHandler");
 const generator = require("generate-password");
+const userBcrypt = require("../utils/userBcrypt");
 
-exports.sendInvitationViaEmail = catchAsync(async (req, res, next) => {
+exports.sendInviteViaEmail = catchAsync(async (req, res, next) => {
   const { sender_card_id, recipient_email } = req.body;
   // console.log(req.body);
 
@@ -148,6 +149,79 @@ exports.sendInvitationViaEmail = catchAsync(async (req, res, next) => {
   }
 });
 
+//verify temp password
+exports.verifyTempPassword = catchAsync(async (req, res, next) => {
+  const { email, password } = req.body;
+
+  const user = await userModel.findOne({ email: email, password: password });
+
+  // console.log("email",email)
+
+  if (!user) {
+    return res.status(401).json({ message: "Invalid credentials." });
+  }
+
+  let status = 0;
+
+  const passwordCount = await tempPasswordModel.aggregate([
+    { $match: { email: email, password: password, status: status } },
+    { $count: "total" },
+  ]);
+
+  if (passwordCount.length > 0) {
+    await tempPasswordModel.updateOne(
+      { email, password, status: status },
+      { email, password, status: 1 }
+    );
+
+    return res.status(200).json({
+      status: true,
+      message: "temp password verified successfully.",
+      data: user,
+    });
+  } else {
+    return res.status(401).json({ status: false, message: "Invalid OTP." });
+  }
+});
+
+//set new password as invited user
+exports.inviteUserRegistration = catchAsync(async (req, res, next) => {
+  const password = req.body.password;
+  const invitedUserId = req.params.id;
+
+  const user = await userModel.findById(invitedUserId);
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found." });
+  }
+
+  const regex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%*?&])[A-Za-z\d@.#$!%*?&]{8,15}$/;
+
+  if (!regex.test(password)) {
+    return next(
+      new ErrorHandler(
+        400,
+        "Invalid password format. Password must have at least one lowercase letter, one uppercase letter, one digit, one special character, and be 8-15 characters long."
+      )
+    );
+  }
+
+  const hashedPassword = await userBcrypt.hashPassword(password);
+
+  user.password = hashedPassword;
+  user.is_verified = true;
+
+  // Save the updated user
+  await user.save();
+
+  user.password = undefined;
+
+  res.status(200).json({
+    status: true,
+    data: user,
+  });
+});
 exports.searchContact = catchAsync(async (req, res, next) => {
   const { name, country, city, designation, company } = req.query;
   let query = {};
