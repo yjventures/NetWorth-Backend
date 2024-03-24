@@ -4,6 +4,7 @@ const userModel = require("../model/userModel");
 const activityModel = require("../model/ActivityModel");
 const linkModel = require("../model/linkModel");
 const ErrorHandler = require("../utils/errorHandler");
+const { encryptData } = require("../utils/encryptAndDecryptUtils");
 
 //create empty card
 exports.createCard = catchAsync(async (req, res, next) => {
@@ -222,5 +223,52 @@ exports.getAllLink = catchAsync(async (req, res, next) => {
   }
 });
 
+//card status update
+exports.updateCardStatus = catchAsync(async (req, res, next) => {
+  const cardId = req.params.cardId;
+  const { status } = req.body;
 
+  const card = await cardModel.findByIdAndUpdate(
+    cardId,
+    {
+      status: status,
+    },
+    {
+      new: true,
+    }
+  );
 
+  if (!card) {
+    return res.status(404).json({
+      status: false,
+      message: "Something Is Wrong With This Card",
+      data: null,
+    });
+  }
+
+  return res.status(200).json({
+    status: true,
+    message: "Status Update Successfully",
+    data: card,
+  });
+});
+
+//profile link share
+exports.generateQRCodeLink = catchAsync(async (req, res, next) => {
+  const card_id = req.params.id;
+
+  const card = await cardModel.findById(card_id);
+  if (!card) {
+    return next(new ErrorHandler(200, "Card Id Not Valid"));
+  }
+  const recipientEncryptId = encryptData(card?._id.toString());
+  // console.log("recipientEncryptId", recipientEncryptId);
+  const url = `${process.env.QR_CODE_REDIRECT_LINK}/${recipientEncryptId.encryptedText}`;
+
+  return res.status(200).json({
+    status: true,
+    data: {
+      url: url,
+    },
+  });
+});

@@ -7,15 +7,15 @@ const uploadImageUtils = require("../utils/uploadImageUtils");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const authVerifyMiddleware = require("../middleware/AuthVerifyMiddleware");
-const adminController = require("../controller/adminController")
-const connectionController = require("../controller/connectionController")
+const adminController = require("../controller/adminController");
+const connectionController = require("../controller/connectionController");
 
 router.get("/", async (req, res, next) => {
   res.status(200).json({
     status: true,
     message: "Hello World",
-  })
-})
+  });
+});
 router.post("/signUp", userController.userRegistration);
 router.post("/verify-email", userController.verifyRegistrationOTP);
 
@@ -88,14 +88,38 @@ router.get(
 );
 
 //admin
-router.post("/admin/login", adminController.adminLogin)
+router.post("/admin/login", adminController.adminLogin);
 router.get("/admin/users", adminController.allUser);
 
-router.get("/admin/users/:userId",authVerifyMiddleware.adminMiddleware, adminController.getUserDetails);
+router.get(
+  "/admin/users/:userId",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.getUserDetails
+);
 
-router.delete("/admin/users/:userId",authVerifyMiddleware.adminMiddleware, adminController.deleteUser);
+router.delete(
+  "/admin/users/:userId",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.deleteUser
+);
 
-router.post("/invite-via-email",connectionController.sendInvitationViaEmail)
+router.get("/search", connectionController.searchContact);
+router.post("/invite-via-email", connectionController.sendInviteViaEmail);
+router.post(
+  "/user/check-temp-password",
+  connectionController.verifyTempPassword
+);
+router.put("/user/member/:id", connectionController.inviteUserRegistration);
 
-router.get("/search", connectionController.searchContact)
+router.put(
+  "/user/card-status/:cardId",
+  authVerifyMiddleware.authMiddleware,
+  cardController.updateCardStatus
+);
+
+router.get(
+  "/user/qr-link/:id",
+  authVerifyMiddleware.authMiddleware,
+  cardController.generateQRCodeLink
+);
 module.exports = router;
