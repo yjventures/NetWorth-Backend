@@ -4,7 +4,9 @@ const cardSchema = mongoose.Schema(
   {
     card_name: String,
     design: {
-      enum: ['linear', 'curved', 'Tilted'],
+      type: String,
+      enum: ['linear', 'curved', 'tilted'],
+      default: 'linear',
     },
     color: {
       type: String,
@@ -31,7 +33,7 @@ const cardSchema = mongoose.Schema(
     email: [
       {
         type: String,
-        unique: true
+        unique: true,
       },
     ],
     designation: {
