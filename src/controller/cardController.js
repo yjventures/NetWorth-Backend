@@ -56,7 +56,7 @@ exports.getCardById = catchAsync(async (req, res, next) => {
   const cardId = req.params.cardId;
   const card = await cardModel
     .findById(cardId)
-    .populate({ path: "links", model: "Link", select: "link" })
+    .populate({ path: "links", model: "Link", select: "link platform" })
     .populate({ path: "activities", model: "Activity" });
 
   if (!card) {
