@@ -164,6 +164,17 @@ exports.getAllActivity = catchAsync(async (req, res, next) => {
   }
 });
 
+exports.deleteActivityByIdd = catchAsync(async (req, res, next) => {
+  const activityId = req.params.id;
+  const activity = await activityModel.findByIdAndDelete(activityId);
+  if (!activity) {
+    return next(new ErrorHandler(404, "Something Is Wrong With This Activity"));
+  }
+  return res.status(200).json({
+    status: true,
+    message: "Successfully Delete This Activity",
+  });
+});
 exports.createLink = catchAsync(async (req, res, next) => {
   const cardId = req.params.cardId;
   const reqBody = req.body;
@@ -223,18 +234,18 @@ exports.getAllLink = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.linkDeleteById = catchAsync(async (req, res, next)=>{
+exports.linkDeleteById = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
   const link = await linkModel.findByIdAndDelete(id);
-  if(!link){
-    return next(new ErrorHandler(404,"Something is wrong with the link"));
+  if (!link) {
+    return next(new ErrorHandler(404, "Something is wrong with the link"));
   }
   return res.status(200).json({
     status: true,
-    message: "Successfully Delete This Link"
-  })
-})
+    message: "Successfully Delete This Link",
+  });
+});
 
 //card status update
 exports.updateCardStatus = catchAsync(async (req, res, next) => {

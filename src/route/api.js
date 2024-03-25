@@ -75,6 +75,11 @@ router.get(
   authVerifyMiddleware.authMiddleware,
   cardController.getAllActivity
 );
+router.delete(
+  "/user/activity/:id",
+  authVerifyMiddleware.authMiddleware,
+  cardController.deleteActivityByIdd
+);
 router.put(
   "/user/card/:cardId/link",
   authVerifyMiddleware.authMiddleware,
