@@ -4,7 +4,7 @@ const userModel = require("../model/userModel");
 const activityModel = require("../model/ActivityModel");
 const linkModel = require("../model/linkModel");
 const ErrorHandler = require("../utils/errorHandler");
-const { encryptData } = require("../utils/encryptAndDecryptUtils");
+const { encryptData, decryptData } = require("../utils/encryptAndDecryptUtils");
 
 //create empty card
 exports.createCard = catchAsync(async (req, res, next) => {
@@ -223,6 +223,19 @@ exports.getAllLink = catchAsync(async (req, res, next) => {
   }
 });
 
+exports.linkDeleteById = catchAsync(async (req, res, next)=>{
+  const id = req.params.id;
+
+  const link = await linkModel.findByIdAndDelete(id);
+  if(!link){
+    return next(new ErrorHandler(404,"Something is wrong with the link"));
+  }
+  return res.status(200).json({
+    status: true,
+    message: "Successfully Delete This Link"
+  })
+})
+
 //card status update
 exports.updateCardStatus = catchAsync(async (req, res, next) => {
   const cardId = req.params.cardId;
@@ -261,14 +274,35 @@ exports.generateQRCodeLink = catchAsync(async (req, res, next) => {
   if (!card) {
     return next(new ErrorHandler(200, "Card Id Not Valid"));
   }
-  const recipientEncryptId = encryptData(card?._id.toString());
-  // console.log("recipientEncryptId", recipientEncryptId);
-  const url = `${process.env.QR_CODE_REDIRECT_LINK}/${recipientEncryptId.encryptedText}`;
+
+  const encryptionKey = process.env.INVITATION_ENCRYPTION_KEY;
+
+  // Ensure card._id is converted to string before encryption
+  const encryptId = encryptData(card?._id.toString(), encryptionKey);
+  const url = `${process.env.QR_CODE_REDIRECT_LINK}/${encryptId}`;
 
   return res.status(200).json({
     status: true,
     data: {
       url: url,
     },
+  });
+});
+
+//decrypt link share
+exports.decryptQRCodeLink = catchAsync(async (req, res, next) => {
+  const encryptId = req.params.id;
+
+  const encryptionKey = process.env.INVITATION_ENCRYPTION_KEY;
+  const decryptedId = decryptData(encryptId, encryptionKey);
+
+  const card = await cardModel.findById(decryptedId);
+  if (!card) {
+    return next(new ErrorHandler(200, "URL not valid"));
+  }
+
+  return res.status(200).json({
+    status: true,
+    data: card,
   });
 });

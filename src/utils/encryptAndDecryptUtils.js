@@ -1,25 +1,21 @@
 const crypto = require("crypto");
+const CryptoJS = require("crypto-js");
+const base64url = require('base64url');
 require("dotenv").config();
 
 // Encrypt data
-exports.encryptData = (text) => {
-  const key = crypto.randomBytes(32); // Generate a random key
-  const iv = crypto.randomBytes(16); // Initialization vector
-  const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
-  let encrypted = cipher.update(text, "utf8", "hex");
-  encrypted += cipher.final("hex");
-  return {
-    encryptedText: encrypted,
-  };
+exports.encryptData = (text, key) => {
+  // console.log("text", text)
+  const encrypted = CryptoJS.AES.encrypt(text, key).toString();
+  console.log("return data", encrypted)
+  return base64url(encrypted);
 };
 
 // Decryption function
-exports.decryptData = (encryptedObj) => {
-  const iv = Buffer.from(encryptedObj.iv, "hex");
-  const key = Buffer.from(encryptedObj.key, "hex");
-  const encryptedText = encryptedObj.encryptedText;
-  const decipher = crypto.createDecipheriv("aes-256-cbc", key, iv);
-  let decrypted = decipher.update(encryptedText, "hex", "utf8");
-  decrypted += decipher.final("utf8");
+exports.decryptData = (encryptedText, key) => {
+  const decrypted = CryptoJS.AES.decrypt(
+    base64url.decode(encryptedText),
+    key
+  ).toString(CryptoJS.enc.Utf8);
   return decrypted;
 };

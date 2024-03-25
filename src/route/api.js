@@ -87,6 +87,12 @@ router.get(
   cardController.getAllLink
 );
 
+router.delete(
+  "/user/link/:id",
+  authVerifyMiddleware.authMiddleware,
+  cardController.linkDeleteById
+);
+
 //admin
 router.post("/admin/login", adminController.adminLogin);
 router.get("/admin/users", adminController.allUser);
@@ -121,5 +127,11 @@ router.get(
   "/user/qr-link/:id",
   authVerifyMiddleware.authMiddleware,
   cardController.generateQRCodeLink
+);
+
+router.get(
+  "/user/decrypt-link/:id",
+  authVerifyMiddleware.authMiddleware,
+  cardController.decryptQRCodeLink
 );
 module.exports = router;

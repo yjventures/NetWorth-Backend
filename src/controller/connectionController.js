@@ -268,3 +268,30 @@ exports.searchContact = catchAsync(async (req, res, next) => {
     data: searchResult,
   });
 });
+
+//send friend request
+exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
+  const { sender_id, recipient_id } = req.body;
+  const senderCard = await cardModel.findById(sender_id);
+  const recipientCard = await cardModel.findById(recipient_id);
+  //check if either user does not exist
+  if (!senderCard || !recipientCard) {
+    return next(new ErrorHandler(404, "One or both users do not exist."));
+  }
+
+  const existsInOutgoing =
+    senderCard.outgoing_friend_request.includes(recipientCard);
+  if (!existsInOutgoing) {
+    senderCard.outgoing_friend_request.includes(recipientCard);
+    recipientCard.incoming_friend_request.push(senderCard);
+  } else {
+    return next(
+      new ErrorHandler(402, "You Are Already Send Invitation For Connection")
+    );
+  }
+
+  return res.status(200).json({
+    status: true,
+    message: "Connection Request Send The User Successfully.",
+  });
+});
