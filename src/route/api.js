@@ -139,4 +139,6 @@ router.get(
   authVerifyMiddleware.authMiddleware,
   cardController.decryptQRCodeLink
 );
+
+router.get("/url-metadata", cardController.getMetaData)
 module.exports = router;

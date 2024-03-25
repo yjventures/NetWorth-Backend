@@ -14,8 +14,10 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.535.0",
     "@azure/ai-form-recognizer": "^5.0.0",
+    "axios": "^1.6.8",
     "base64url": "^3.0.1",
     "bcrypt": "^5.1.1",
+    "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "crypto-js": "^4.2.0",

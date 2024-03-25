@@ -275,8 +275,12 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
   const senderCard = await cardModel.findById(sender_id);
   const recipientCard = await cardModel.findById(recipient_id);
   //check if either user does not exist
-  if (!senderCard || !recipientCard) {
-    return next(new ErrorHandler(404, "One or both users do not exist."));
+  if (!senderCard) {
+    return next(new ErrorHandler(404, "Something Wrong with Your card"));
+  }
+
+  if (!recipientCard) {
+    return next(new ErrorHandler(404, "Something Wrong with Recipient Card"));
   }
 
   const existsInOutgoing =
@@ -294,4 +298,23 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
     status: true,
     message: "Connection Request Send The User Successfully.",
   });
+});
+
+//accept connection invitation
+exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
+  const { recipient_id, sender_id } = req.body;
+  // const senderCard = await cardModel.findById(sender_id);
+  const recipientCard = await cardModel.findById(recipient_id);
+
+  // if (!senderCard) {
+  //   return next(new ErrorHandler(404, "Something Wrong with Sender Card"));
+  // }
+
+  if (!recipientCard) {
+    return next(new ErrorHandler(404, "Something Wrong with Your Card"));
+  }
+
+  recipientCard.incoming_friend_request.push(senderCard);
+  
+
 });
