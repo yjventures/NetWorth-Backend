@@ -156,17 +156,17 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
 });
 
 // //get all friends list by card id
-// exports.getAllFriendsListByCardId = catchAsync(async (req, res, next) => {
-//   const cardId = req.params.id;
-//   const card = await cardModel
-//     .findById(cardId)
-//     .populate("links activities friend_list");
-//   if (!card) {
-//     return next(new ErrorHandler(404, "Something Is Wrong With This Card"));
-//   }
+exports.getAllFriendsListByCardId = catchAsync(async (req, res, next) => {
+  const cardId = req.params.id;
+  const card = await cardModel
+    .findById(cardId)
+    .populate("links activities friend_list");
+  if (!card) {
+    return next(new ErrorHandler(404, "Something Is Wrong With This Card"));
+  }
 
-//   return res.status(200).json({
-//     status: true,
-//     data: card,
-//   });
-// });
+  return res.status(200).json({
+    status: true,
+    data: card,
+  });
+});

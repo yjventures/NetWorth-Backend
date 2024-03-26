@@ -148,9 +148,9 @@ router.get(
 
 router.get("/url-metadata", cardController.getMetaData);
 
-// router.get(
-//   "/admin/card/:id",
-//   authVerifyMiddleware.adminMiddleware,
-//   adminController.getAllFriendsListByCardId
-// );
+router.get(
+  "/admin/card/:id",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.getAllFriendsListByCardId
+);
 module.exports = router;
