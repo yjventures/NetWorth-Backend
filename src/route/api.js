@@ -98,6 +98,8 @@ router.delete(
   cardController.linkDeleteById
 );
 
+router.delete("/user/card/:id", authVerifyMiddleware.authMiddleware, cardController.deleteCardById)
+
 //admin
 router.post("/admin/login", adminController.adminLogin);
 router.get("/admin/users", adminController.allUser);

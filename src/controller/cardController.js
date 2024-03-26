@@ -104,6 +104,19 @@ exports.getAllCard = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.deleteCardById = catchAsync(async (req, res, next)=>{
+  const cardId = req.params.id;
+  const card = await cardModel.findByIdAndDelete(cardId);
+
+  if(!card){
+    return next(new ErrorHandler(404, "Something is Wrong With This Card"))
+  }
+
+  return res.status(200).json({
+    status: true,
+    message: "Card Delete Successfully"
+  })
+})
 //create activity
 exports.createActivity = catchAsync(async (req, res, next) => {
   const cardId = req.params.cardId;
