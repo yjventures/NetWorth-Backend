@@ -1,4 +1,5 @@
 const { catchAsync } = require("../middleware/catchAsyncError");
+const cardModel = require("../model/cardModel");
 const userModel = require("../model/userModel");
 const SendEmailUtils = require("../utils/SendEmailUtils");
 const ErrorHandler = require("../utils/errorHandler");
@@ -47,8 +48,7 @@ exports.allUser = catchAsync(async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-   
-    let sortQuery = { createdAt: -1 }; 
+    let sortQuery = { createdAt: -1 };
     if (req.query.sortBy && req.query.sortOrder) {
       sortQuery[req.query.sortBy] = req.query.sortOrder === "desc" ? -1 : 1;
     }
@@ -57,10 +57,9 @@ exports.allUser = catchAsync(async (req, res, next) => {
     if (req.query.search) {
       filterQuery.$or = [
         { email: { $regex: new RegExp(req.query.search, "i") } },
-        { "personal_info.name": { $regex: new RegExp(req.query.search, "i") } }
+        { "personal_info.name": { $regex: new RegExp(req.query.search, "i") } },
       ];
     }
-
 
     const totalUsers = await userModel.countDocuments(filterQuery);
 
@@ -75,7 +74,7 @@ exports.allUser = catchAsync(async (req, res, next) => {
       return res.status(200).json({
         status: false,
         message: "No users found",
-        data: []
+        data: [],
       });
     }
 
@@ -101,8 +100,6 @@ exports.allUser = catchAsync(async (req, res, next) => {
   }
 });
 
-
-
 exports.getUserDetails = catchAsync(async (req, res, next) => {
   const userId = req.params.userId;
   const role = req.headers.role;
@@ -114,7 +111,7 @@ exports.getUserDetails = catchAsync(async (req, res, next) => {
   const user = await userModel
     .findById(userId)
     .populate("personal_info")
-    .populate("cards");
+    .populate({ path: "cards", populate: "activities links" });
 
   if (!user) {
     return next(new ErrorHandler(404, "This User Details Not Found"));
@@ -157,3 +154,19 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
     data: user,
   });
 });
+
+// //get all friends list by card id
+// exports.getAllFriendsListByCardId = catchAsync(async (req, res, next) => {
+//   const cardId = req.params.id;
+//   const card = await cardModel
+//     .findById(cardId)
+//     .populate("links activities friend_list");
+//   if (!card) {
+//     return next(new ErrorHandler(404, "Something Is Wrong With This Card"));
+//   }
+
+//   return res.status(200).json({
+//     status: true,
+//     data: card,
+//   });
+// });

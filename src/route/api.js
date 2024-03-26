@@ -98,7 +98,11 @@ router.delete(
   cardController.linkDeleteById
 );
 
-router.delete("/user/card/:id", authVerifyMiddleware.authMiddleware, cardController.deleteCardById)
+router.delete(
+  "/user/card/:id",
+  authVerifyMiddleware.authMiddleware,
+  cardController.deleteCardById
+);
 
 //admin
 router.post("/admin/login", adminController.adminLogin);
@@ -142,5 +146,11 @@ router.get(
   cardController.decryptQRCodeLink
 );
 
-router.get("/url-metadata", cardController.getMetaData)
+router.get("/url-metadata", cardController.getMetaData);
+
+// router.get(
+//   "/admin/card/:id",
+//   authVerifyMiddleware.adminMiddleware,
+//   adminController.getAllFriendsListByCardId
+// );
 module.exports = router;
