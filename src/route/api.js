@@ -153,4 +153,5 @@ router.get(
   authVerifyMiddleware.adminMiddleware,
   adminController.getAllFriendsListByCardId
 );
+
 module.exports = router;

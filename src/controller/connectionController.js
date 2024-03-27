@@ -223,18 +223,24 @@ exports.inviteUserRegistration = catchAsync(async (req, res, next) => {
   });
 });
 exports.searchContact = catchAsync(async (req, res, next) => {
-  const { name, country, city, designation, company } = req.query;
+  const { search, country, city, designation, } = req.query;
   let query = {};
 
-  if (name) {
-    query.name = { $regex: name, $options: "i" };
+  if (search) {
+    if (search.includes('@')) {
+      query.email = { $regex: `^${search}`, $options: "i" };
+    } else {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } }
+      ];
+    }
   }
+  
   if (designation) {
     query.designation = { $regex: designation, $options: "i" };
   }
-  if (company) {
-    query.company_name = { $regex: company, $options: "i" };
-  }
+  
 
   // For city and country
   if (city && country) {
