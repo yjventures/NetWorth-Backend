@@ -236,7 +236,7 @@ exports.searchContact = catchAsync(async (req, res, next) => {
       ];
     }
   }
-  
+
   if (designation) {
     query.designation = { $regex: designation, $options: "i" };
   }
@@ -291,9 +291,15 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
 
   const existsInOutgoing =
     senderCard.outgoing_friend_request.includes(recipientCard);
-  if (!existsInOutgoing) {
-    senderCard.outgoing_friend_request.includes(recipientCard);
+
+  console.log(existsInOutgoing)
+  
+  if (existsInOutgoing === false) {
+    senderCard.outgoing_friend_request.push(recipientCard);
     recipientCard.incoming_friend_request.push(senderCard);
+
+    await senderCard.save()
+    await recipientCard.save()
   } else {
     return next(
       new ErrorHandler(402, "You Are Already Send Invitation For Connection")
@@ -309,18 +315,61 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
 //accept connection invitation
 exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
   const { recipient_id, sender_id } = req.body;
-  // const senderCard = await cardModel.findById(sender_id);
+  const senderCard = await cardModel.findById(sender_id);
   const recipientCard = await cardModel.findById(recipient_id);
 
-  // if (!senderCard) {
-  //   return next(new ErrorHandler(404, "Something Wrong with Sender Card"));
-  // }
+  if (!senderCard) {
+    return next(new ErrorHandler(404, "Something Wrong with Sender Card"));
+  }
 
   if (!recipientCard) {
     return next(new ErrorHandler(404, "Something Wrong with Your Card"));
   }
 
-  recipientCard.incoming_friend_request.push(senderCard);
-  
+  const isInIncoming = recipientCard.incoming_friend_request.includes(sender_id);
+  const isInOutgoing = senderCard.outgoing_friend_request.includes(recipient_id);
 
+  if (isInIncoming) {
+    // Remove sender_id from recipientCard's incoming_friend_request
+    recipientCard.incoming_friend_request = recipientCard.incoming_friend_request.filter(
+      id => id.toString() !== sender_id.toString()
+    );
+    // Add sender_id to recipientCard's friend_list
+    recipientCard.friend_list.push(sender_id);
+
+    // Remove recipient_id from senderCard's outgoing_friend_request
+    senderCard.outgoing_friend_request = senderCard.outgoing_friend_request.filter(
+      id => id.toString() !== recipient_id.toString()
+    );
+    // Add recipient_id to senderCard's friend_list
+    senderCard.friend_list.push(recipient_id);
+  } else if (isInOutgoing) {
+    // Remove recipient_id from senderCard's outgoing_friend_request
+    senderCard.outgoing_friend_request = senderCard.outgoing_friend_request.filter(
+      id => id.toString() !== recipient_id.toString()
+    );
+    // Add recipient_id to senderCard's friend_list
+    senderCard.friend_list.push(recipient_id);
+
+    // Remove sender_id from recipientCard's incoming_friend_request
+    recipientCard.incoming_friend_request = recipientCard.incoming_friend_request.filter(
+      id => id.toString() !== sender_id.toString()
+    );
+    // Add sender_id to recipientCard's friend_list
+    recipientCard.friend_list.push(sender_id);
+  } else {
+    // If sender is not in either list, return an error
+    return next(new ErrorHandler(404, "Sender not found in either incoming or outgoing requests"));
+  }
+
+  // Save the updated sender and recipient cards
+  await senderCard.save();
+  await recipientCard.save();
+
+  return res.status(200).json({
+    status: true,
+    message: "Connection request accepted. Users are now friends.",
+  });
 });
+
+
