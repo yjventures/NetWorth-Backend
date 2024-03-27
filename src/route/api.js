@@ -154,8 +154,28 @@ router.get(
   adminController.getAllFriendsListByCardId
 );
 
-
 //friend request send and acceptance
-router.put("/user/send-request", authVerifyMiddleware.authMiddleware, connectionController.sendConnectionRequest)
-router.put("/user/accept-request", authVerifyMiddleware.authMiddleware, connectionController.acceptConnectionRequest)
+router.put(
+  "/card/send-request",
+  authVerifyMiddleware.authMiddleware,
+  connectionController.sendConnectionRequest
+);
+router.put(
+  "/card/accept-request",
+  authVerifyMiddleware.authMiddleware,
+  connectionController.acceptConnectionRequest
+);
+
+
+router.get(
+  "/card/:id/incoming-request",
+  authVerifyMiddleware.authMiddleware,
+  connectionController.showInComingRequestList
+);
+
+router.get(
+  "/card/:id/outgoing-request",
+  authVerifyMiddleware.authMiddleware,
+  connectionController.showOutGoingRequestList
+);
 module.exports = router;

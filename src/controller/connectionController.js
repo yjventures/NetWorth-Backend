@@ -223,16 +223,16 @@ exports.inviteUserRegistration = catchAsync(async (req, res, next) => {
   });
 });
 exports.searchContact = catchAsync(async (req, res, next) => {
-  const { search, country, city, designation, } = req.query;
+  const { search, country, city, designation } = req.query;
   let query = {};
 
   if (search) {
-    if (search.includes('@')) {
+    if (search.includes("@")) {
       query.email = { $regex: `^${search}`, $options: "i" };
     } else {
       query.$or = [
         { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } }
+        { email: { $regex: search, $options: "i" } },
       ];
     }
   }
@@ -240,7 +240,6 @@ exports.searchContact = catchAsync(async (req, res, next) => {
   if (designation) {
     query.designation = { $regex: designation, $options: "i" };
   }
-  
 
   // For city and country
   if (city && country) {
@@ -292,14 +291,14 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
   const existsInOutgoing =
     senderCard.outgoing_friend_request.includes(recipientCard);
 
-  console.log(existsInOutgoing)
-  
+  console.log(existsInOutgoing);
+
   if (existsInOutgoing === false) {
     senderCard.outgoing_friend_request.push(recipientCard);
     recipientCard.incoming_friend_request.push(senderCard);
 
-    await senderCard.save()
-    await recipientCard.save()
+    await senderCard.save();
+    await recipientCard.save();
   } else {
     return next(
       new ErrorHandler(402, "You Are Already Send Invitation For Connection")
@@ -326,40 +325,51 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(404, "Something Wrong with Your Card"));
   }
 
-  const isInIncoming = recipientCard.incoming_friend_request.includes(sender_id);
-  const isInOutgoing = senderCard.outgoing_friend_request.includes(recipient_id);
+  const isInIncoming =
+    recipientCard.incoming_friend_request.includes(sender_id);
+  const isInOutgoing =
+    senderCard.outgoing_friend_request.includes(recipient_id);
 
   if (isInIncoming) {
     // Remove sender_id from recipientCard's incoming_friend_request
-    recipientCard.incoming_friend_request = recipientCard.incoming_friend_request.filter(
-      id => id.toString() !== sender_id.toString()
-    );
+    recipientCard.incoming_friend_request =
+      recipientCard.incoming_friend_request.filter(
+        (id) => id.toString() !== sender_id.toString()
+      );
     // Add sender_id to recipientCard's friend_list
     recipientCard.friend_list.push(sender_id);
 
     // Remove recipient_id from senderCard's outgoing_friend_request
-    senderCard.outgoing_friend_request = senderCard.outgoing_friend_request.filter(
-      id => id.toString() !== recipient_id.toString()
-    );
+    senderCard.outgoing_friend_request =
+      senderCard.outgoing_friend_request.filter(
+        (id) => id.toString() !== recipient_id.toString()
+      );
     // Add recipient_id to senderCard's friend_list
     senderCard.friend_list.push(recipient_id);
   } else if (isInOutgoing) {
     // Remove recipient_id from senderCard's outgoing_friend_request
-    senderCard.outgoing_friend_request = senderCard.outgoing_friend_request.filter(
-      id => id.toString() !== recipient_id.toString()
-    );
+    senderCard.outgoing_friend_request =
+      senderCard.outgoing_friend_request.filter(
+        (id) => id.toString() !== recipient_id.toString()
+      );
     // Add recipient_id to senderCard's friend_list
     senderCard.friend_list.push(recipient_id);
 
     // Remove sender_id from recipientCard's incoming_friend_request
-    recipientCard.incoming_friend_request = recipientCard.incoming_friend_request.filter(
-      id => id.toString() !== sender_id.toString()
-    );
+    recipientCard.incoming_friend_request =
+      recipientCard.incoming_friend_request.filter(
+        (id) => id.toString() !== sender_id.toString()
+      );
     // Add sender_id to recipientCard's friend_list
     recipientCard.friend_list.push(sender_id);
   } else {
     // If sender is not in either list, return an error
-    return next(new ErrorHandler(404, "Sender not found in either incoming or outgoing requests"));
+    return next(
+      new ErrorHandler(
+        404,
+        "Sender not found in either incoming or outgoing requests"
+      )
+    );
   }
 
   // Save the updated sender and recipient cards
@@ -372,4 +382,72 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
   });
 });
 
+//show incoming request
+exports.showInComingRequestList = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
 
+  const incomingRequest = await cardModel.findById(id).populate({
+    path: "incoming_friend_request",
+    model: "Card",
+  }).select(`
+    -outgoing_friend_request 
+    -friend_list
+    -address
+    -bio
+    -card_name
+    -color
+    -company_logo
+    -company_name
+    -cover_image
+    -designation
+    -name
+    -profile_image
+    -design -email -phone_number -links -activities
+  `);
+
+  if (!incomingRequest) {
+    return next(
+      new ErrorHandler(200, "Something is Wrong With Card Incoming Request")
+    );
+  }
+
+  return res.status(200).json({
+    status: true,
+    data: incomingRequest,
+  });
+});
+
+//show out going request
+exports.showOutGoingRequestList = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
+
+  const outgoingRequest = await cardModel.findById(id).populate({
+    path: "outgoing_friend_request",
+    model: "Card",
+  }).select(`
+    -incoming_friend_request 
+    -friend_list
+    -address
+    -bio
+    -card_name
+    -color
+    -company_logo
+    -company_name
+    -cover_image
+    -designation
+    -name
+    -profile_image
+    -design -email -phone_number -links -activities
+  `);
+
+  if (!outgoingRequest) {
+    return next(
+      new ErrorHandler(200, "Something is Wrong With Card outgoing Request")
+    );
+  }
+
+  return res.status(200).json({
+    status: true,
+    data: outgoingRequest,
+  });
+});
