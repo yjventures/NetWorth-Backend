@@ -166,6 +166,17 @@ router.put(
   connectionController.acceptConnectionRequest
 );
 
+router.put(
+  "/card/cancel-incoming-request",
+  authVerifyMiddleware.authMiddleware,
+  connectionController.cancelIncomingRequest
+);
+
+router.put(
+  "/card/cancel-outgoing-request",
+  authVerifyMiddleware.authMiddleware,
+  connectionController.cancelOutgoingRequest
+);
 
 router.get(
   "/card/:id/incoming-request",
