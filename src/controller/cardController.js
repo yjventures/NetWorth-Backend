@@ -319,21 +319,35 @@ exports.generateQRCodeLink = catchAsync(async (req, res, next) => {
 });
 
 //decrypt link share
-//todo card details, 
 exports.decryptQRCodeLink = catchAsync(async (req, res, next) => {
-  const encryptId = req.params.id;
+  // const encryptId = req.params.id;
+  const { card_encrypt_id, user_encrypt_id } = req.body;
 
   const encryptionKey = process.env.INVITATION_ENCRYPTION_KEY;
-  const decryptedId = decryptData(encryptId, encryptionKey);
+  const decryptedCardId = decryptData(card_encrypt_id, encryptionKey);
 
-  const card = await cardModel.findById(decryptedId);
+  const decryptedUserId = decryptData(user_encrypt_id, encryptionKey);
+
+  const card = await cardModel
+    .findById(decryptedCardId)
+    .populate({ path: "links", model: "Link", select: "link platform" })
+    .populate({ path: "activities", model: "Activity" });
+
+    
+  const user = await userModel.findById(decryptedUserId);
   if (!card) {
-    return next(new ErrorHandler(200, "URL not valid"));
+    return next(new ErrorHandler(200, "URL's Card Not Valid"));
+  }
+  if (!user) {
+    return next(new ErrorHandler(200, "URL's User Not Valid"));
   }
 
   return res.status(200).json({
     status: true,
-    data: card,
+    data: {
+      cardInfo: card,
+      userInfo: user,
+    },
   });
 });
 
@@ -418,7 +432,6 @@ exports.showAllActivities = catchAsync(async (req, res, next) => {
     data: allActivities,
   });
 });
-
 
 //show all friend
 exports.showFriendListForCard = catchAsync(async (req, res, next) => {
