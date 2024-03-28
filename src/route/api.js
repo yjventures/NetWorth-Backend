@@ -121,12 +121,12 @@ router.delete(
 );
 
 router.get("/search", connectionController.searchContact);
-router.post("/invite-via-email", connectionController.sendInviteViaEmail);
-router.post(
-  "/user/check-temp-password",
-  connectionController.verifyTempPassword
-);
-router.put("/user/member/:id", connectionController.inviteUserRegistration);
+// router.post("/invite-via-email", connectionController.sendInviteViaEmail);
+// router.post(
+  // "/user/check-temp-password",
+  // connectionController.verifyTempPassword
+// );
+// router.put("/user/member/:id", connectionController.inviteUserRegistration);
 
 router.put(
   "/user/card-status/:cardId",
@@ -191,5 +191,6 @@ router.get(
 );
 
 //show feed
-router.get("/card/:id/feed", cardController.showAllActivities)
+router.get("/card/:id/feed",authVerifyMiddleware.authMiddleware, cardController.showAllActivities)
+router.get("/card/:id/friend-list",authVerifyMiddleware.authMiddleware, cardController.showFriendListForCard)
 module.exports = router;

@@ -295,7 +295,7 @@ exports.updateCardStatus = catchAsync(async (req, res, next) => {
 //profile link share
 exports.generateQRCodeLink = catchAsync(async (req, res, next) => {
   const card_id = req.params.id;
-
+  const userId = req.headers.userId;
   const card = await cardModel.findById(card_id);
   if (!card) {
     return next(new ErrorHandler(200, "Card Id Not Valid"));
@@ -304,8 +304,11 @@ exports.generateQRCodeLink = catchAsync(async (req, res, next) => {
   const encryptionKey = process.env.INVITATION_ENCRYPTION_KEY;
 
   // Ensure card._id is converted to string before encryption
-  const encryptId = encryptData(card?._id.toString(), encryptionKey);
-  const url = `${process.env.QR_CODE_REDIRECT_LINK}/${encryptId}`;
+  const encryptedCardId = encryptData(card?._id.toString(), encryptionKey);
+  const encryptedUserId = encryptData(userId.toString(), encryptionKey);
+
+  // Construct the URL using encrypted IDs
+  const url = `${process.env.QR_CODE_REDIRECT_LINK}/from=qr?cardId=${encryptedCardId}&userId=${encryptedUserId}`;
 
   return res.status(200).json({
     status: true,
@@ -406,5 +409,34 @@ exports.showAllActivities = catchAsync(async (req, res, next) => {
   return res.status(200).json({
     status: true,
     data: friend_list,
+  });
+});
+
+//show all friend
+exports.showFriendListForCard = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
+
+  const friendList = await cardModel
+    .findById(id)
+    .populate({
+      path: "friend_list",
+      model: "Card",
+      select:
+        "-design -links -incoming_friend_request -outgoing_friend_request -address -bio -card_name -color -company_logo -company_name -cover_image -designation -status -phone_number -email -activities -friend_list",
+    })
+    .select(
+      "-design -email -phone_number -links -activities -incoming_friend_request -outgoing_friend_request -address -bio -card_name -color -company_logo -company_name -cover_image -designation -name -profile_image -status"
+    );
+
+  if (!friendList) {
+    return res.status(404).json({
+      status: false,
+      message: "Card not found",
+    });
+  }
+
+  return res.status(200).json({
+    status: true,
+    data: friendList,
   });
 });
