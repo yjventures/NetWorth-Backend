@@ -23,9 +23,16 @@ const activitySchema = mongoose.Schema(
       type: String,
     },
     link: {
-      type: String,
+      platform: {
+        type: String,
+        enum: ["link", "youtube", "pdf"],
+      },
+      url: {
+        type: String,
+      },
     },
   },
+
   {
     versionKey: false,
     timestamps: true,

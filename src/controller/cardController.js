@@ -308,7 +308,7 @@ exports.generateQRCodeLink = catchAsync(async (req, res, next) => {
   const encryptedUserId = encryptData(userId.toString(), encryptionKey);
 
   // Construct the URL using encrypted IDs
-  const url = `${process.env.QR_CODE_REDIRECT_LINK}/from=qr?cardId=${encryptedCardId}&userId=${encryptedUserId}`;
+  const url = `${process.env.QR_CODE_REDIRECT_LINK}?cardId=${encryptedCardId}&userId=${encryptedUserId}`;
 
   return res.status(200).json({
     status: true,
@@ -319,6 +319,7 @@ exports.generateQRCodeLink = catchAsync(async (req, res, next) => {
 });
 
 //decrypt link share
+//todo card details, 
 exports.decryptQRCodeLink = catchAsync(async (req, res, next) => {
   const encryptId = req.params.id;
 
