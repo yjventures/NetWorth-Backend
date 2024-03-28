@@ -383,10 +383,10 @@ exports.showAllActivities = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
   // Find the card with the provided id and populate the 'friend_list' field
-  const friend_list = await cardModel
+  const card = await cardModel
     .findById(id)
     .select(
-      "-design -email -phone_number -links -activities -incoming_friend_request -outgoing_friend_request -address -bio -card_name -color -company_logo -company_name -cover_image -designation -name -profile_image -status"
+      "-design -email -phone_number -links -incoming_friend_request -outgoing_friend_request -address -bio -card_name -color -company_logo -company_name -cover_image -designation -name -profile_image -status"
     )
     .populate({
       path: "friend_list",
@@ -399,18 +399,25 @@ exports.showAllActivities = catchAsync(async (req, res, next) => {
       },
     });
 
-  if (!friend_list) {
+  if (!card) {
     return res.status(404).json({
       status: false,
       message: "Card not found",
     });
   }
 
+  // Extract all activities from the friend_list
+  const allActivities = card.friend_list.reduce((acc, friend) => {
+    acc.push(...friend.activities);
+    return acc;
+  }, []);
+
   return res.status(200).json({
     status: true,
-    data: friend_list,
+    data: allActivities,
   });
 });
+
 
 //show all friend
 exports.showFriendListForCard = catchAsync(async (req, res, next) => {
@@ -435,6 +442,7 @@ exports.showFriendListForCard = catchAsync(async (req, res, next) => {
     });
   }
 
+  // const friendListArray = card?.;
   return res.status(200).json({
     status: true,
     data: friendList,
