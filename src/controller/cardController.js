@@ -6,7 +6,7 @@ const linkModel = require("../model/linkModel");
 const ErrorHandler = require("../utils/errorHandler");
 const { encryptData, decryptData } = require("../utils/encryptAndDecryptUtils");
 const { load } = require("cheerio");
-const axios=  require("axios");
+const axios = require("axios");
 
 //create empty card
 exports.createCard = catchAsync(async (req, res, next) => {
@@ -104,19 +104,19 @@ exports.getAllCard = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.deleteCardById = catchAsync(async (req, res, next)=>{
+exports.deleteCardById = catchAsync(async (req, res, next) => {
   const cardId = req.params.id;
   const card = await cardModel.findByIdAndDelete(cardId);
 
-  if(!card){
-    return next(new ErrorHandler(404, "Something is Wrong With This Card"))
+  if (!card) {
+    return next(new ErrorHandler(404, "Something is Wrong With This Card"));
   }
 
   return res.status(200).json({
     status: true,
-    message: "Card Delete Successfully"
-  })
-})
+    message: "Card Delete Successfully",
+  });
+});
 //create activity
 exports.createActivity = catchAsync(async (req, res, next) => {
   const cardId = req.params.cardId;
@@ -374,3 +374,37 @@ exports.getMetaData = async (req, res) => {
       );
   }
 };
+
+//for homepage feed
+exports.showAllActivities = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
+
+  // Find the card with the provided id and populate the 'friend_list' field
+  const friend_list = await cardModel
+    .findById(id)
+    .select(
+      "-design -email -phone_number -links -activities -incoming_friend_request -outgoing_friend_request -address -bio -card_name -color -company_logo -company_name -cover_image -designation -name -profile_image -status"
+    )
+    .populate({
+      path: "friend_list",
+      model: "Card",
+      select:
+        "-design -links -incoming_friend_request -outgoing_friend_request -address -bio -card_name -color -company_logo -company_name -cover_image -designation -status -friend_list -phone_number -email",
+      populate: {
+        path: "activities",
+        model: "Activity",
+      },
+    });
+
+  if (!friend_list) {
+    return res.status(404).json({
+      status: false,
+      message: "Card not found",
+    });
+  }
+
+  return res.status(200).json({
+    status: true,
+    data: friend_list,
+  });
+});

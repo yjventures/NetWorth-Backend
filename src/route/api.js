@@ -189,4 +189,7 @@ router.get(
   authVerifyMiddleware.authMiddleware,
   connectionController.showOutGoingRequestList
 );
+
+//show feed
+router.get("/card/:id/feed", cardController.showAllActivities)
 module.exports = router;
