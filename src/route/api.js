@@ -9,6 +9,7 @@ const upload = multer({ storage: storage });
 const authVerifyMiddleware = require("../middleware/AuthVerifyMiddleware");
 const adminController = require("../controller/adminController");
 const connectionController = require("../controller/connectionController");
+const tempCardController = require("../controller/tempCardController");
 
 router.get("/", async (req, res, next) => {
   res.status(200).json({
@@ -70,10 +71,7 @@ router.put(
   authVerifyMiddleware.authMiddleware,
   cardController.createActivity
 );
-router.get(
-  "/user/card/:cardId/activity",
-  cardController.getAllActivity
-);
+router.get("/user/card/:cardId/activity", cardController.getAllActivity);
 router.delete(
   "/user/activity/:id",
   authVerifyMiddleware.authMiddleware,
@@ -85,10 +83,7 @@ router.put(
   cardController.createLink
 );
 
-router.get(
-  "/user/card/:cardId/link",
-  cardController.getAllLink
-);
+router.get("/user/card/:cardId/link", cardController.getAllLink);
 
 router.delete(
   "/user/link/:id",
@@ -121,8 +116,8 @@ router.delete(
 router.get("/search", connectionController.searchContact);
 // router.post("/invite-via-email", connectionController.sendInviteViaEmail);
 // router.post(
-  // "/user/check-temp-password",
-  // connectionController.verifyTempPassword
+// "/user/check-temp-password",
+// connectionController.verifyTempPassword
 // );
 // router.put("/user/member/:id", connectionController.inviteUserRegistration);
 
@@ -189,6 +184,20 @@ router.get(
 );
 
 //show feed
-router.get("/card/:id/feed",authVerifyMiddleware.authMiddleware, cardController.showAllActivities)
-router.get("/card/:id/friend-list",authVerifyMiddleware.authMiddleware, cardController.showFriendListForCard)
+router.get(
+  "/card/:id/feed",
+  authVerifyMiddleware.authMiddleware,
+  cardController.showAllActivities
+);
+router.get(
+  "/card/:id/friend-list",
+  authVerifyMiddleware.authMiddleware,
+  cardController.showFriendListForCard
+);
+
+router.post(
+  "/user/invitation/temp-card",
+  authVerifyMiddleware.authMiddleware,
+  tempCardController.createTempCard
+);
 module.exports = router;
