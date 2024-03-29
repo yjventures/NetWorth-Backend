@@ -72,7 +72,6 @@ router.put(
 );
 router.get(
   "/user/card/:cardId/activity",
-  authVerifyMiddleware.authMiddleware,
   cardController.getAllActivity
 );
 router.delete(
@@ -88,7 +87,6 @@ router.put(
 
 router.get(
   "/user/card/:cardId/link",
-  authVerifyMiddleware.authMiddleware,
   cardController.getAllLink
 );
 
