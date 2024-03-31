@@ -135,7 +135,6 @@ router.get(
 
 router.get(
   "/user/decrypt-qr-link",
-  authVerifyMiddleware.authMiddleware,
   cardController.decryptQRCodeLink
 );
 
