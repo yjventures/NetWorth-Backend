@@ -133,10 +133,7 @@ router.get(
   cardController.generateQRCodeLink
 );
 
-router.get(
-  "/user/decrypt-qr-link",
-  cardController.decryptQRCodeLink
-);
+router.get("/user/decrypt-qr-link", cardController.decryptQRCodeLink);
 
 router.get("/url-metadata", cardController.getMetaData);
 
@@ -199,4 +196,11 @@ router.post(
   authVerifyMiddleware.authMiddleware,
   tempCardController.createTempCard
 );
+
+router.get(
+  "/user/check-card/card/:cardId",
+  authVerifyMiddleware.authMiddleware,
+  cardController.checkCardOwner
+);
+
 module.exports = router;

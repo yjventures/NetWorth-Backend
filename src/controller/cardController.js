@@ -348,7 +348,7 @@ exports.decryptQRCodeLink = catchAsync(async (req, res, next) => {
     status: true,
     data: {
       cardInfo: card,
-      userInfo: user,
+      userInfo: user?._id,
     },
   });
 });
@@ -463,4 +463,35 @@ exports.showFriendListForCard = catchAsync(async (req, res, next) => {
     status: true,
     data: friendListArray,
   });
+});
+
+
+exports.checkCardOwner = catchAsync(async (req, res, next) => {
+  const userId = req.headers.userId;
+  const cardId = req.params.cardId;
+  console.log(userId)
+
+  const card = await cardModel.findById(cardId);
+  if (!card) {
+    return next(new ErrorHandler(404, "Card Not Found"));
+  }
+
+  const user = await userModel.findOne({ _id: userId, cards: cardId });
+
+  if (!user) {
+    return res.status(200).json({
+      status: false,
+      data: {
+        isOwnId: false,
+      },
+    });
+  } else {
+    return res.status(200).json({
+      status: false,
+      data: {
+        isOwnId: true,
+      },
+    });
+  }
+  // console.log("hello world")
 });

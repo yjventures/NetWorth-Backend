@@ -12,6 +12,7 @@ const {
 } = require("@azure/ai-form-recognizer");
 const jwt = require("jsonwebtoken");
 const verifyRefreshToken = require("../utils/verifyRefreshToken");
+const cardModel = require("../model/cardModel");
 
 const regex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%*?&])[A-Za-z\d@.#$!%*?&]{8,15}$/;
@@ -227,15 +228,13 @@ exports.login = catchAsync(async (req, res, next) => {
   );
 
   user.password = undefined;
-  res
-    .status(200)
-    .json({
-      status: true,
-      message: "login successful",
-      data: user,
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-    });
+  res.status(200).json({
+    status: true,
+    message: "login successful",
+    data: user,
+    accessToken: accessToken,
+    refreshToken: refreshToken,
+  });
 });
 
 //verify login
@@ -501,3 +500,5 @@ exports.RecoverResetPassword = catchAsync(async (req, res) => {
     return next(new ErrorHandler(402, "OTP Code is not valid"));
   }
 });
+
+
