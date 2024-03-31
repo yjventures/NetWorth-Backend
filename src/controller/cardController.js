@@ -321,10 +321,13 @@ exports.generateQRCodeLink = catchAsync(async (req, res, next) => {
 //decrypt link share
 exports.decryptQRCodeLink = catchAsync(async (req, res, next) => {
   // const encryptId = req.params.id;
-  const { card_encrypt_id, user_encrypt_id } = req.params;
+  const card_encrypt_id = req.query.card_encrypt_id;
+  const user_encrypt_id = req.query.user_encrypt_id;
+  // console.log(card_encrypt_id, user_encrypt_id);
 
   const encryptionKey = process.env.INVITATION_ENCRYPTION_KEY;
   const decryptedCardId = decryptData(card_encrypt_id, encryptionKey);
+  // console.log("decryptedCardId",decryptedCardId)
 
   const decryptedUserId = decryptData(user_encrypt_id, encryptionKey);
 
@@ -333,7 +336,6 @@ exports.decryptQRCodeLink = catchAsync(async (req, res, next) => {
     .populate({ path: "links", model: "Link", select: "link platform" })
     .populate({ path: "activities", model: "Activity" });
 
-    
   const user = await userModel.findById(decryptedUserId);
   if (!card) {
     return next(new ErrorHandler(200, "URL's Card Not Valid"));
