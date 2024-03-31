@@ -321,7 +321,7 @@ exports.generateQRCodeLink = catchAsync(async (req, res, next) => {
 //decrypt link share
 exports.decryptQRCodeLink = catchAsync(async (req, res, next) => {
   // const encryptId = req.params.id;
-  const { card_encrypt_id, user_encrypt_id } = req.body;
+  const { card_encrypt_id, user_encrypt_id } = req.params;
 
   const encryptionKey = process.env.INVITATION_ENCRYPTION_KEY;
   const decryptedCardId = decryptData(card_encrypt_id, encryptionKey);

@@ -133,7 +133,7 @@ router.get(
   cardController.generateQRCodeLink
 );
 
-router.post(
+router.get(
   "/user/decrypt-qr-link",
   authVerifyMiddleware.authMiddleware,
   cardController.decryptQRCodeLink
