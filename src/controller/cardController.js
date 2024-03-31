@@ -487,7 +487,7 @@ exports.checkCardOwner = catchAsync(async (req, res, next) => {
     });
   } else {
     return res.status(200).json({
-      status: false,
+      status: true,
       data: {
         isOwnId: true,
       },
