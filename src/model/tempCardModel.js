@@ -27,6 +27,7 @@ const tempCardSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Card",
     },
+    
   },
   {
     versionKey: false,

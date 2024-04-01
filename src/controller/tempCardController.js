@@ -2,6 +2,8 @@ const { catchAsync } = require("../middleware/catchAsyncError");
 const cardModel = require("../model/cardModel");
 const tempCardModel = require("../model/tempCardModel");
 const ErrorHandler = require("../utils/errorHandler");
+const SendEmailUtils = require("../utils/SendEmailUtils");
+
 
 exports.createTempCard = catchAsync(async (req, res, next) => {
   const {
@@ -48,6 +50,10 @@ exports.createTempCard = catchAsync(async (req, res, next) => {
     phone_number,
     invited_card,
   });
+
+  const emailMessage = `You have a Invitation from the NetWorthHub`;
+  const emailSubject = "NetWorth";
+  const emailSend = await SendEmailUtils(email[0], emailMessage, emailSubject);
 
   res.status(201).json({
     status: true,
