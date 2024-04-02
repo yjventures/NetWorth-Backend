@@ -1,0 +1,29 @@
+const mongoose = require("mongoose");
+
+const notificationSchema = mongoose.Schema(
+  {
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Card",
+    },
+    receiver: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Card",
+    },
+    text: {
+      type: String,
+    },
+    time_stamp: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  {
+    versionKey: false,
+    timestamps: true,
+  }
+);
+
+const notificationModel = mongoose.model("Notification", notificationSchema);
+
+module.exports = notificationModel;
