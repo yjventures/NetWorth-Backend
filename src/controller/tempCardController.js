@@ -1,6 +1,7 @@
 const { catchAsync } = require("../middleware/catchAsyncError");
 const cardModel = require("../model/cardModel");
 const tempCardModel = require("../model/tempCardModel");
+const userModel = require("../model/userModel");
 const { encryptData, decryptData } = require("../utils/encryptAndDecryptUtils");
 const ErrorHandler = require("../utils/errorHandler");
 const SendEmailUtils = require("../utils/SendEmailUtils");
@@ -118,6 +119,7 @@ exports.decryptTempCardInvitation = catchAsync(async (req, res, next) => {
 });
 
 exports.createNewCard = catchAsync(async (req, res, next) => {
+  const userId = req.headers.userId;
   const tempCardId = req.query.temp_card_id;
   const inviteeCardId = req.query.invited_id;
   // console.log(inviteeCardId);
@@ -125,6 +127,10 @@ exports.createNewCard = catchAsync(async (req, res, next) => {
   const reqBody = req.body;
 
   try {
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return next(new ErrorHandler(400, "User not found"));
+    }
     // Create a new card
     const newCard = await cardModel.create(reqBody);
 
@@ -144,12 +150,14 @@ exports.createNewCard = catchAsync(async (req, res, next) => {
     if (newCard) {
       card.friend_list.push(newCard._id);
       newCard.friend_list.push(inviteeCardId);
+      user.cards.push(newCard?._id);
+
+      await user.save();
       await card.save();
       await newCard.save();
     }
 
     const tempCardDelete = await tempCardModel.findByIdAndDelete(tempCardId);
-
 
     if (!tempCardDelete) {
       return next(new ErrorHandler(200, "Temp Card Deletation Error"));
