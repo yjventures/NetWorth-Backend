@@ -86,8 +86,8 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
     recipientCard.incoming_friend_request.push(senderCard);
 
     const notification = await notificationModel.create({
-      sender: sender_id,
-      receiver: recipient_id,
+      sender:  recipient_id,
+      receiver: sender_id,
       text: "requested to connect",
     });
 
@@ -168,8 +168,8 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
   }
 
   const notification = await notificationModel.create({
-    sender: recipient_id,
-    receiver: sender_id,
+    sender: sender_id,
+    receiver:  recipient_id,
     text: "accepted your connection request",
   });
 

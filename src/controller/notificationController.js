@@ -5,9 +5,15 @@ exports.showAllNotifications = catchAsync(async (req, res, next) => {
   const cardId = req.params.id;
 
   try {
-    const card = await cardModel
-      .findById(cardId)
-      .populate({ path: "notifications", model: "Notification" });
+    const card = await cardModel.findById(cardId).populate({
+      path: "notifications",
+      model: "Notification",
+      populate: {
+        path: "receiver",
+        model: "Card",
+        select: "profile_image name",
+      },
+    });
 
     if (!card) {
       return next(new ErrorHandler(404, "Something Wrong with Card"));
