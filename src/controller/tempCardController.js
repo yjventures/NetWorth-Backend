@@ -120,7 +120,7 @@ exports.decryptTempCardInvitation = catchAsync(async (req, res, next) => {
 exports.createNewCard = catchAsync(async (req, res, next) => {
   const tempCardId = req.query.temp_card_id;
   const inviteeCardId = req.query.invited_id;
-  console.log(inviteeCardId);
+  // console.log(inviteeCardId);
 
   const reqBody = req.body;
 
@@ -135,7 +135,7 @@ exports.createNewCard = catchAsync(async (req, res, next) => {
       { new: true }
     );
 
-    console.log(card);
+    // console.log(card);
 
     if (!card) {
       return res.status(404).json({ message: "Card not found" });
