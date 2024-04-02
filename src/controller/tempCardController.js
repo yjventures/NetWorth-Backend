@@ -1,9 +1,9 @@
 const { catchAsync } = require("../middleware/catchAsyncError");
 const cardModel = require("../model/cardModel");
 const tempCardModel = require("../model/tempCardModel");
+const { encryptData } = require("../utils/encryptAndDecryptUtils");
 const ErrorHandler = require("../utils/errorHandler");
 const SendEmailUtils = require("../utils/SendEmailUtils");
-
 
 exports.createTempCard = catchAsync(async (req, res, next) => {
   const {
@@ -16,6 +16,11 @@ exports.createTempCard = catchAsync(async (req, res, next) => {
     invited_card,
   } = req.body;
 
+  // Check if the card existance
+  const inviteeCard = await cardModel.findById(invited_card);
+  if (!inviteeCard) {
+    return next(new ErrorHandler(404, "Your Card Not Found"));
+  }
   // Check if email exists in tempCardModel
   const existingEmailsTempCard = await tempCardModel.find({
     email: { $in: email },
@@ -51,7 +56,21 @@ exports.createTempCard = catchAsync(async (req, res, next) => {
     invited_card,
   });
 
-  const emailMessage = `You have a Invitation from the NetWorthHub`;
+  inviteeCard.friend_list.push(newTempCard?._id);
+  await inviteeCard.save();
+
+  const encryptionKey = process.env.INVITATION_ENCRYPTION_KEY;
+
+  const encryptedTempCardId = encryptData(
+    newTempCard?._id.toString(),
+    encryptionKey
+  );
+
+  const urlEmail = email[0];
+  const encryptedURL = `${urlEmail}-${encryptedTempCardId}`;
+
+  const emailMessage = `You have an Invitation from the NetWorthHub ${process.env.INVITATION_LINK}?encrypted=${encryptedURL}`;
+
   const emailSubject = "NetWorth";
   const emailSend = await SendEmailUtils(email[0], emailMessage, emailSubject);
 
