@@ -118,10 +118,11 @@ exports.decryptTempCardInvitation = catchAsync(async (req, res, next) => {
 });
 
 exports.createNewCard = catchAsync(async (req, res, next) => {
-  const tempCardId = req.params.temp_card_id;
-  const inviteeCardId = req.params.invited_id;
+  const tempCardId = req.query.temp_card_id;
+  const inviteeCardId = req.query.invited_id;
+  console.log(inviteeCardId);
 
-  const reqBody = req.body; 
+  const reqBody = req.body;
 
   try {
     // Create a new card
@@ -134,6 +135,8 @@ exports.createNewCard = catchAsync(async (req, res, next) => {
       { new: true }
     );
 
+    console.log(card);
+
     if (!card) {
       return res.status(404).json({ message: "Card not found" });
     }
@@ -143,12 +146,15 @@ exports.createNewCard = catchAsync(async (req, res, next) => {
       await card.save();
     }
 
-    return res
-      .status(200)
-      .json({ message: "Temp card removed from friend_list" });
+    const tempCardDelete = await tempCardModel.findOneAndDelete(tempCardId);
+
+    if (!tempCardDelete) {
+      return next(new ErrorHandler(200, "Temp Card Deletation Error"));
+    }
+
+    return res.status(200).json({ message: "Successfully added new card" });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 });
-
