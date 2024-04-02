@@ -169,11 +169,11 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
   // Save the updated sender and recipient cards
   await senderCard.save();
   await recipientCard.save();
-  // await notificationModel.create({
-  //   sender: sender_id,
-  //   receiver: recipient_id,
-  //   text: "accepted your connection request",
-  // });
+  await notificationModel.create({
+    sender: sender_id,
+    receiver: recipient_id,
+    text: "accepted your connection request",
+  });
 
   return res.status(200).json({
     status: true,
