@@ -85,14 +85,15 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
     senderCard.outgoing_friend_request.push(recipientCard);
     recipientCard.incoming_friend_request.push(senderCard);
 
-    await senderCard.save();
-    await recipientCard.save();
-
-    await notificationModel.create({
+    const notification = await notificationModel.create({
       sender: sender_id,
       receiver: recipient_id,
       text: "requested to connect",
     });
+
+    recipientCard.notifications.push(notification?._id);
+    await senderCard.save();
+    await recipientCard.save();
   } else {
     return next(
       new ErrorHandler(402, "You Are Already Send Invitation For Connection")
@@ -166,14 +167,16 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     );
   }
 
+  const notification = await notificationModel.create({
+    sender: recipient_id,
+    receiver: sender_id,
+    text: "accepted your connection request",
+  });
+
+  senderCard.notifications.push(notification?._id)
   // Save the updated sender and recipient cards
   await senderCard.save();
   await recipientCard.save();
-  await notificationModel.create({
-    sender: sender_id,
-    receiver: recipient_id,
-    text: "accepted your connection request",
-  });
 
   return res.status(200).json({
     status: true,

@@ -2,10 +2,12 @@ const { catchAsync } = require("../middleware/catchAsyncError");
 const cardModel = require("../model/cardModel");
 
 exports.showAllNotifications = catchAsync(async (req, res, next) => {
-  const cardId = req.params.id
+  const cardId = req.params.id;
 
   try {
-    const card = await cardModel.findById(cardId).populate({ path: 'notifications', model: 'Notification' })
+    const card = await cardModel
+      .findById(cardId)
+      .populate({ path: "notifications", model: "Notification" });
 
     if (!card) {
       return next(new ErrorHandler(404, "Something Wrong with Card"));
@@ -18,4 +20,4 @@ exports.showAllNotifications = catchAsync(async (req, res, next) => {
   } catch (error) {
     return next(new ErrorHandler(500, "Something Wrong with Card"));
   }
-})
+});

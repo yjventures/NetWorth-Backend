@@ -83,6 +83,12 @@ const cardSchema = mongoose.Schema(
     status: {
       type: String,
     },
+    notifications:[
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Notification',
+      },
+    ]
   },
   {
     versionKey: false,
