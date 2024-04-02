@@ -10,6 +10,7 @@ const authVerifyMiddleware = require("../middleware/AuthVerifyMiddleware");
 const adminController = require("../controller/adminController");
 const connectionController = require("../controller/connectionController");
 const tempCardController = require("../controller/tempCardController");
+const { showAllNotifications } = require("../controller/notificationController");
 
 router.get("/", async (req, res, next) => {
   res.status(200).json({
@@ -214,4 +215,5 @@ router.get(
   cardController.checkCardOwner
 );
 
+router.get("/card/:id/notifications", authVerifyMiddleware.authMiddleware, showAllNotifications)
 module.exports = router;
