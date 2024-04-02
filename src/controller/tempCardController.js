@@ -106,6 +106,10 @@ exports.decryptTempCardInvitation = catchAsync(async (req, res, next) => {
     select: "company_name designation name profile_image"
   })
 
+  if(!tempCard){
+    return next(new ErrorHandler(404, "Card Id not matched"))
+  }
+
   // console.log(tempCard)
   return res.status(200).json({
     status: true,
