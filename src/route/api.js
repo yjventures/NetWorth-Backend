@@ -197,6 +197,8 @@ router.post(
   tempCardController.createTempCard
 );
 
+router.get("/check-temp-invitation", tempCardController.decryptTempCardInvitation)
+
 router.get(
   "/user/check-card/card/:cardId",
   authVerifyMiddleware.authMiddleware,

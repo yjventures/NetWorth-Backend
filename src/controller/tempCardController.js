@@ -1,7 +1,7 @@
 const { catchAsync } = require("../middleware/catchAsyncError");
 const cardModel = require("../model/cardModel");
 const tempCardModel = require("../model/tempCardModel");
-const { encryptData } = require("../utils/encryptAndDecryptUtils");
+const { encryptData, decryptData } = require("../utils/encryptAndDecryptUtils");
 const ErrorHandler = require("../utils/errorHandler");
 const SendEmailUtils = require("../utils/SendEmailUtils");
 
@@ -61,15 +61,18 @@ exports.createTempCard = catchAsync(async (req, res, next) => {
 
   const encryptionKey = process.env.INVITATION_ENCRYPTION_KEY;
 
-  const encryptedTempCardId = encryptData(
-    newTempCard?._id.toString(),
-    encryptionKey
-  );
-
   const urlEmail = email[0];
-  const encryptedURL = `${urlEmail}-${encryptedTempCardId}`;
 
-  const emailMessage = `You have an Invitation from the NetWorthHub ${process.env.INVITATION_LINK}?encrypted=${encryptedURL}`;
+  const objectToEncrypt = {
+    email: urlEmail,
+    cardId: newTempCard?._id.toString(),
+  };
+  const serializedObject = JSON.stringify(objectToEncrypt);
+  const encryptedData = encryptData(serializedObject, encryptionKey);
+
+  // const encryptedURL = `${urlEmail}-${encryptedTempCardId}`;
+
+  const emailMessage = `You have an Invitation from the NetWorthHub ${process.env.INVITATION_LINK}?encrypted=${encryptedData}`;
 
   const emailSubject = "NetWorth";
   const emailSend = await SendEmailUtils(email[0], emailMessage, emailSubject);
@@ -79,4 +82,33 @@ exports.createTempCard = catchAsync(async (req, res, next) => {
     message: "Invitation Sent Successfully",
     data: newTempCard,
   });
+});
+
+//check encrypted temp card id
+exports.decryptTempCardInvitation = catchAsync(async (req, res, next) => {
+  const encryptionData = req.query.encrypt_data;
+  // console.log(encryptionData)
+
+  const encryptionKey = process.env.INVITATION_ENCRYPTION_KEY;
+
+  const decryptedData = decryptData(encryptionData, encryptionKey);
+
+  // Parse the decrypted JSON string back into an object
+  const decryptedObject = JSON.parse(decryptedData);
+
+  // console.log(decryptedObject)
+  const tempCardId =  decryptedObject?.cardId;
+
+  // console.log(tempCardId)
+  const tempCard = await tempCardModel.findById(tempCardId).populate({
+    path: "invited_card",
+    model: "Card",
+    select: "company_name designation name profile_image"
+  })
+
+  // console.log(tempCard)
+  return res.status(200).json({
+    status: true,
+    data: tempCard
+  })
 });
