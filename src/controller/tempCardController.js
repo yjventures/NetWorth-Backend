@@ -143,10 +143,13 @@ exports.createNewCard = catchAsync(async (req, res, next) => {
 
     if (newCard) {
       card.friend_list.push(newCard._id);
+      newCard.friend_list.push(inviteeCardId);
       await card.save();
+      await newCard.save();
     }
 
-    const tempCardDelete = await tempCardModel.findOneAndDelete(tempCardId);
+    const tempCardDelete = await tempCardModel.findByIdAndDelete(tempCardId);
+
 
     if (!tempCardDelete) {
       return next(new ErrorHandler(200, "Temp Card Deletation Error"));
