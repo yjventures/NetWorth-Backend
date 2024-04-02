@@ -97,22 +97,58 @@ exports.decryptTempCardInvitation = catchAsync(async (req, res, next) => {
   const decryptedObject = JSON.parse(decryptedData);
 
   // console.log(decryptedObject)
-  const tempCardId =  decryptedObject?.cardId;
+  const tempCardId = decryptedObject?.cardId;
 
   // console.log(tempCardId)
   const tempCard = await tempCardModel.findById(tempCardId).populate({
     path: "invited_card",
     model: "Card",
-    select: "company_name designation name profile_image"
-  })
+    select: "company_name designation name profile_image",
+  });
 
-  if(!tempCard){
-    return next(new ErrorHandler(404, "Card Id not matched"))
+  if (!tempCard) {
+    return next(new ErrorHandler(404, "Card Id not matched"));
   }
 
   // console.log(tempCard)
   return res.status(200).json({
     status: true,
-    data: tempCard
-  })
+    data: tempCard,
+  });
 });
+
+exports.createNewCard = catchAsync(async (req, res, next) => {
+  const tempCardId = req.params.temp_card_id;
+  const inviteeCardId = req.params.invited_id;
+
+  const reqBody = req.body; 
+
+  try {
+    // Create a new card
+    const newCard = await cardModel.create(reqBody);
+
+    // Find the card to update
+    const card = await cardModel.findOneAndUpdate(
+      { _id: inviteeCardId },
+      { $pull: { friend_list: tempCardId } },
+      { new: true }
+    );
+
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    if (newCard) {
+      card.friend_list.push(newCard._id);
+      await card.save();
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Temp card removed from friend_list" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
