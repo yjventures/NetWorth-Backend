@@ -108,17 +108,32 @@ exports.getAllCard = catchAsync(async (req, res, next) => {
 
 exports.deleteCardById = catchAsync(async (req, res, next) => {
   const cardId = req.params.id;
-  const card = await cardModel.findByIdAndDelete(cardId);
+  const userId = req.headers.userId;
 
-  if (!card) {
-    return next(new ErrorHandler(404, "Something is Wrong With This Card"));
+  try {
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return next(new ErrorHandler(404, "User not found"));
+    }
+
+    const card = await cardModel.findByIdAndDelete(cardId);
+    if (!card) {
+      return next(new ErrorHandler(404, "Card not found"));
+    }
+
+    // Remove cardId from user's cards array
+    user.cards.pull(cardId);
+    await user.save();
+
+    return res.status(200).json({
+      status: true,
+      message: "Card deleted successfully",
+    });
+  } catch (error) {
+    return next(new ErrorHandler(500, "Internal Server Error"));
   }
-
-  return res.status(200).json({
-    status: true,
-    message: "Card Delete Successfully",
-  });
 });
+
 //create activity
 exports.createActivity = catchAsync(async (req, res, next) => {
   const cardId = req.params.cardId;
