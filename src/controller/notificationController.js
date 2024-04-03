@@ -1,5 +1,6 @@
 const { catchAsync } = require("../middleware/catchAsyncError");
 const cardModel = require("../model/cardModel");
+const moment = require("moment");
 
 exports.showAllNotifications = catchAsync(async (req, res, next) => {
   const cardId = req.params.id;
@@ -19,9 +20,14 @@ exports.showAllNotifications = catchAsync(async (req, res, next) => {
       return next(new ErrorHandler(404, "Something Wrong with Card"));
     }
 
+    const formattedNotifications = card.notifications.map(notification => ({
+      ...notification.toObject(), 
+      time_stamp: moment(notification.time_stamp).fromNow(), 
+    }));
+
     return res.status(200).json({
       status: true,
-      data: card.notifications,
+      data: formattedNotifications,
     });
   } catch (error) {
     return next(new ErrorHandler(500, "Something Wrong with Card"));
