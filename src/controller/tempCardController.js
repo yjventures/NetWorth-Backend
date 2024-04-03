@@ -1,5 +1,6 @@
 const { catchAsync } = require("../middleware/catchAsyncError");
 const cardModel = require("../model/cardModel");
+const notificationModel = require("../model/notificationModel");
 const tempCardModel = require("../model/tempCardModel");
 const userModel = require("../model/userModel");
 const { encryptData, decryptData } = require("../utils/encryptAndDecryptUtils");
@@ -152,6 +153,13 @@ exports.createNewCard = catchAsync(async (req, res, next) => {
       newCard.friend_list.push(inviteeCardId);
       user.cards.push(newCard?._id);
 
+      const notification = await notificationModel.create({
+        sender: card?._id,
+        receiver: newCard?._id,
+        text: "accept your invitation and get 250 tokens",
+      });
+
+      card.notifications.push(notification?._id);
       await user.save();
       await card.save();
       await newCard.save();
