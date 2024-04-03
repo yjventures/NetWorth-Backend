@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose')
 
 const activitySchema = mongoose.Schema(
   {
@@ -19,26 +19,25 @@ const activitySchema = mongoose.Schema(
         type: String,
       },
     ],
+    files: [
+      {
+        type: String,
+      },
+    ],
+    cover_photo: String,
     description: {
       type: String,
     },
     link: {
-      platform: {
-        type: String,
-        enum: ["link", "youtube", "pdf"],
-      },
-      url: {
-        type: String,
-      },
+      type: String,
     },
   },
-
   {
     versionKey: false,
     timestamps: true,
   }
-);
+)
 
-const activityModel = mongoose.model("Activity", activitySchema);
+const activityModel = mongoose.model('Activity', activitySchema)
 
-module.exports = activityModel;
+module.exports = activityModel
