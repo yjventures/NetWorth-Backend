@@ -88,7 +88,11 @@ const cardSchema = mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Notification',
       },
-    ]
+    ],
+    count: {
+      type: Number,
+      default: 0
+    }
   },
   {
     versionKey: false,

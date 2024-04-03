@@ -216,4 +216,7 @@ router.get(
 );
 
 router.get("/card/:id/notifications", authVerifyMiddleware.authMiddleware, showAllNotifications)
+
+router.put("/get-visitor-count", cardController.countTotalVisitior)
+
 module.exports = router;
