@@ -220,7 +220,7 @@ exports.getSigleActivity = catchAsync(async (req, res, next) => {
 
   return res.status(200).json({
     status: true,
-    data: card,
+    data: { card: card, activity: activity },
   });
 });
 
@@ -488,16 +488,18 @@ exports.showAllActivities = catchAsync(async (req, res, next) => {
 
   // Extract all activities from the friend_list
   const allActivities = card?.friend_list?.reduce((acc, friend) => {
-    acc.push(...friend.activities.map(activity => {
-      return {
-        card: {
-          _id: friend._id,
-          name: friend.name,
-          profile_image: friend.profile_image,
-        },
-        activity: activity
-      };
-    }));
+    acc.push(
+      ...friend.activities.map((activity) => {
+        return {
+          card: {
+            _id: friend._id,
+            name: friend.name,
+            profile_image: friend.profile_image,
+          },
+          activity: activity,
+        };
+      })
+    );
     return acc;
   }, []);
 
@@ -506,7 +508,6 @@ exports.showAllActivities = catchAsync(async (req, res, next) => {
     data: allActivities,
   });
 });
-
 
 //show all friend
 exports.showFriendListForCard = catchAsync(async (req, res, next) => {
