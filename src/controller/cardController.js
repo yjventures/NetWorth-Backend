@@ -197,24 +197,30 @@ exports.getAllActivity = catchAsync(async (req, res, next) => {
 });
 
 exports.getSigleActivity = catchAsync(async (req, res, next) => {
-  const cardId = req.params.cardId;
   const activityId = req.params.activityId;
-  const card = await cardModel.findById(cardId).select("name profile_image")
-  const activity = await activityModel.findById(activityId);
-
+  const card = await cardModel
+    .findOne({ activities: activityId })
+    .populate("activities")
+    .select("name profile_image");
   if (!card) {
-    return next(new ErrorHandler(404, "Your selected card not found in this page"));
+    return next(
+      new ErrorHandler(404, "Your selected card not found in this page")
+    );
   }
+
+  console.log(card);
+
+  const activity = card.activities[0];
+
   if (!activity) {
-    return next(new ErrorHandler(404, "Activity Not Found"));
+    return next(
+      new ErrorHandler(404, "The Activity is not available on the Card")
+    );
   }
 
   return res.status(200).json({
     status: true,
-    data: {
-      card: card,
-      activity: activity,
-    },
+    data: card,
   });
 });
 
