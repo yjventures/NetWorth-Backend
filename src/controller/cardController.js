@@ -458,7 +458,7 @@ exports.getMetaData = async (req, res) => {
   }
 };
 
-//for homepage feed
+//for homepage feeds
 exports.showAllActivities = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
@@ -466,13 +466,13 @@ exports.showAllActivities = catchAsync(async (req, res, next) => {
   const card = await cardModel
     .findById(id)
     .select(
-      "-design -email -phone_number -links -incoming_friend_request -outgoing_friend_request -address -bio -card_name -color -company_logo -company_name -cover_image -designation -name -profile_image -status"
+      "-design -email -phone_number -links -incoming_friend_request -outgoing_friend_request -address -bio -color -company_logo -company_name -cover_image -designation -status"
     )
     .populate({
       path: "friend_list",
       model: "Card",
       select:
-        "-design -links -incoming_friend_request -outgoing_friend_request -address -bio -card_name -color -company_logo -company_name -cover_image -designation -status -friend_list -phone_number -email",
+        "-design -links -incoming_friend_request -outgoing_friend_request -address -bio -color -company_logo -company_name -cover_image -designation -status -friend_list -phone_number -email",
       populate: {
         path: "activities",
         model: "Activity",
@@ -487,8 +487,17 @@ exports.showAllActivities = catchAsync(async (req, res, next) => {
   }
 
   // Extract all activities from the friend_list
-  const allActivities = card.friend_list.reduce((acc, friend) => {
-    acc.push(...friend.activities);
+  const allActivities = card?.friend_list?.reduce((acc, friend) => {
+    acc.push(...friend.activities.map(activity => {
+      return {
+        card: {
+          _id: friend._id,
+          name: friend.name,
+          profile_image: friend.profile_image,
+        },
+        activity: activity
+      };
+    }));
     return acc;
   }, []);
 
@@ -497,6 +506,7 @@ exports.showAllActivities = catchAsync(async (req, res, next) => {
     data: allActivities,
   });
 });
+
 
 //show all friend
 exports.showFriendListForCard = catchAsync(async (req, res, next) => {
