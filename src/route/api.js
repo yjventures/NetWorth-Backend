@@ -45,7 +45,7 @@ router.get('/user/card/:cardId', authVerifyMiddleware.authMiddleware, cardContro
 router.get('/user/card', authVerifyMiddleware.authMiddleware, cardController.getAllCard)
 router.put('/user/card/:cardId/activity', authVerifyMiddleware.authMiddleware, cardController.createActivity)
 router.get('/user/card/:cardId/activity', cardController.getAllActivity)
-router.get('/user/activity/:activityId', cardController.getSigleActivity)
+router.get('/card/:cardId/activity/:activityId', cardController.getSigleActivity)
 router.put('/user/activity/:activityId', cardController.updateActivity)
 router.delete('/user/activity/:id', authVerifyMiddleware.authMiddleware, cardController.deleteActivityByIdd)
 router.put('/user/card/:cardId/link', authVerifyMiddleware.authMiddleware, cardController.createLink)
