@@ -141,32 +141,49 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
       recipientCard.incoming_friend_request.filter(
         (id) => id.toString() !== sender_id.toString()
       );
-    // Add sender_id to recipientCard's friend_list
-    recipientCard.friend_list.push(sender_id);
+
+    // Add sender_id to recipientCard's friend_list with a timestamp
+    recipientCard.friend_list.push({
+      friend: sender_id,
+      from: "incoming",
+      time_stamp: new Date()
+    });
 
     // Remove recipient_id from senderCard's outgoing_friend_request
     senderCard.outgoing_friend_request =
       senderCard.outgoing_friend_request.filter(
         (id) => id.toString() !== recipient_id.toString()
       );
-    // Add recipient_id to senderCard's friend_list
-    senderCard.friend_list.push(recipient_id);
+
+    // Add recipient_id to senderCard's friend_list with a timestamp
+    senderCard.friend_list.push({
+      friend: recipient_id,
+      time_stamp: new Date()
+    });
   } else if (isInOutgoing) {
     // Remove recipient_id from senderCard's outgoing_friend_request
     senderCard.outgoing_friend_request =
       senderCard.outgoing_friend_request.filter(
         (id) => id.toString() !== recipient_id.toString()
       );
-    // Add recipient_id to senderCard's friend_list
-    senderCard.friend_list.push(recipient_id);
+
+    // Add recipient_id to senderCard's friend_list with a timestamp
+    senderCard.friend_list.push({
+      friend: recipient_id,
+      time_stamp: new Date()
+    });
 
     // Remove sender_id from recipientCard's incoming_friend_request
     recipientCard.incoming_friend_request =
       recipientCard.incoming_friend_request.filter(
         (id) => id.toString() !== sender_id.toString()
       );
-    // Add sender_id to recipientCard's friend_list
-    recipientCard.friend_list.push(sender_id);
+
+    // Add sender_id to recipientCard's friend_list with a timestamp
+    recipientCard.friend_list.push({
+      friend: sender_id,
+      time_stamp: new Date()
+    });
   } else {
     // If sender is not in either list, return an error
     return next(
@@ -183,7 +200,8 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     text: "accepted your connection request",
   });
 
-  senderCard.notifications.push(notification?._id)
+  senderCard.notifications.push(notification?._id);
+
   // Save the updated sender and recipient cards
   await senderCard.save();
   await recipientCard.save();
@@ -193,6 +211,7 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     message: "Connection request accepted. Users are now friends.",
   });
 });
+
 
 //show incoming request
 exports.showInComingRequestList = catchAsync(async (req, res, next) => {

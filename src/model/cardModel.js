@@ -58,20 +58,29 @@ const cardSchema = mongoose.Schema(
     ],
     friend_list: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        friend: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Card', 
+        },
+        from:{
+          type: String,
+        },
+        time_stamp: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
     incoming_friend_request: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Card',
       },
     ],
     outgoing_friend_request: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Card',
       },
     ],
     is_private: {

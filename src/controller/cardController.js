@@ -498,9 +498,13 @@ exports.showFriendListForCard = catchAsync(async (req, res, next) => {
     .findById(id)
     .populate({
       path: 'friend_list',
-      model: 'Card',
-      select:
+      
+      populate:{
+        path: "friend",
+        model: "Card",
+        select:
         '-design -links -incoming_friend_request -outgoing_friend_request -address -bio -card_name -color -company_logo  -cover_image -status -phone_number -email -activities -friend_list',
+      }
     })
     .select(
       '-design -email -phone_number -links -activities -incoming_friend_request -outgoing_friend_request -address -bio -card_name -color -company_logo -company_name -cover_image -designation -name -profile_image -status'
