@@ -199,7 +199,7 @@ exports.getSigleActivity = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(404, 'Your selected card not found in this page'))
   }
 
-  console.log(card)
+  // console.log(card)
 
   const activity = card.activities[0]
 

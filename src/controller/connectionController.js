@@ -65,46 +65,56 @@ exports.searchContact = catchAsync(async (req, res, next) => {
 //send friend request
 exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
   const { sender_id, recipient_id } = req.body;
+
+  // Find the sender and recipient cards
   const senderCard = await cardModel.findById(sender_id);
   const recipientCard = await cardModel.findById(recipient_id);
-  //check if either user does not exist
+
+  // Check if either user does not exist
   if (!senderCard) {
-    return next(new ErrorHandler(404, "Something Wrong with Your card"));
+    return next(new ErrorHandler(404, "Sender card not found"));
   }
 
   if (!recipientCard) {
-    return next(new ErrorHandler(404, "Something Wrong with Recipient Card"));
+    return next(new ErrorHandler(404, "Recipient card not found"));
   }
 
-  const existsInOutgoing =
-    senderCard.outgoing_friend_request.includes(recipientCard);
+  // Check if the recipient is already in the sender's outgoing_friend_request
+  const existsInOutgoing = senderCard.outgoing_friend_request.some(card => card.toString() === recipient_id.toString());
 
-  // console.log(existsInOutgoing);
-
-  if (existsInOutgoing === false) {
+  if (!existsInOutgoing) {
+    // Add recipientCard to sender's outgoing_friend_request
     senderCard.outgoing_friend_request.push(recipientCard);
+
+    // Add senderCard to recipient's incoming_friend_request
     recipientCard.incoming_friend_request.push(senderCard);
 
+    // Create notification
     const notification = await notificationModel.create({
-      sender:  recipient_id,
-      receiver: sender_id,
+      sender: sender_id,
+      receiver: recipient_id,
       text: "requested to connect",
     });
 
-    recipientCard.notifications.push(notification?._id);
+    // Add notification to recipient's notifications
+    recipientCard.notifications.push(notification._id);
+
+    // Save changes to both cards
     await senderCard.save();
     await recipientCard.save();
   } else {
+    // If already exists, return an error
     return next(
-      new ErrorHandler(402, "You Are Already Send Invitation For Connection")
+      new ErrorHandler(403, "You have already sent a connection request to this user.")
     );
   }
 
   return res.status(200).json({
     status: true,
-    message: "Connection Request Send The Card Successfully.",
+    message: "Connection request sent successfully.",
   });
 });
+
 
 //accept connection invitation
 exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
