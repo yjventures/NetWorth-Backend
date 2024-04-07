@@ -58,6 +58,7 @@ exports.createTempCard = catchAsync(async (req, res, next) => {
     invited_card,
   });
 
+  inviteeCard.invite_in_platform.number += 1;
   inviteeCard.friend_list.push(newTempCard?._id);
   await inviteeCard.save();
 

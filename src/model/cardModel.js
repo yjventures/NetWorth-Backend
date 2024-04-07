@@ -5,8 +5,8 @@ const cardSchema = mongoose.Schema(
     card_name: String,
     design: {
       type: String,
-      enum: ['linear', 'curved', 'tilted'],
-      default: 'linear',
+      enum: ["linear", "curved", "tilted"],
+      default: "linear",
     },
     color: {
       type: String,
@@ -47,22 +47,22 @@ const cardSchema = mongoose.Schema(
     links: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Link',
+        ref: "Link",
       },
     ],
     activities: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Activity',
+        ref: "Activity",
       },
     ],
     friend_list: [
       {
         friend: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: 'Card', 
+          ref: "Card",
         },
-        from:{
+        from: {
           type: String,
         },
         time_stamp: {
@@ -74,13 +74,13 @@ const cardSchema = mongoose.Schema(
     incoming_friend_request: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Card',
+        ref: "Card",
       },
     ],
     outgoing_friend_request: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Card',
+        ref: "Card",
       },
     ],
     is_private: {
@@ -92,26 +92,36 @@ const cardSchema = mongoose.Schema(
     status: {
       type: String,
     },
-    notifications:[
+    notifications: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Notification',
+        ref: "Notification",
       },
     ],
     count: {
       type: Number,
-      default: 0
+      default: 0,
     },
     total_points: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
+    invite_in_platform: {
+      number: {
+        type: Number,
+        default: 0,
+      },
+      time_stamp: {
+        type: Date,
+        default: Date.now,
+      },
+    },
   },
   {
     versionKey: false,
     timestamps: true,
   }
-)
+);
 
 const cardModel = mongoose.model('Card', cardSchema)
 
