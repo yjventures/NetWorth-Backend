@@ -591,3 +591,76 @@ exports.countTotalVisitior = catchAsync(async (req, res, next) => {
     message: 'Card count incremented and added to user',
   })
 })
+
+exports.cardAnalyticalData = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
+
+  // Find card data
+  const card = await cardModel.findById(id);
+  if (!card) {
+    return next(
+      new ErrorHandler(200, "Something is Wrong With Card Analytical Data")
+    );
+  }
+
+  // Calculate additional data for main card
+  const totalPoints = card.total_points;
+  const friendListLength = card.friend_list.length;
+
+  // Group main card friend_list by month and count incoming/outgoing for each month
+  const mainCardMonthWiseCounts = card.friend_list.reduce((acc, friend) => {
+    const monthYear = new Date(friend.time_stamp).toISOString().slice(0, 7); // Year-month format
+    if (!acc[monthYear]) {
+      acc[monthYear] = { incoming: 0, outgoing: 0, invited: 0 };
+    }
+    if (friend.from === "incoming") {
+      acc[monthYear].incoming++;
+    } else {
+      acc[monthYear].outgoing++;
+    }
+    return acc;
+  }, {});
+
+  // Find tempCardModel data where invited_card matches the given id
+  const tempCards = await tempCardModel.find({ invited_card: id });
+
+  // Calculate additional data for temp cards
+  const tempCardsMonthWiseCounts = tempCards.reduce((result, tempCard) => {
+    const monthYear = new Date(tempCard.createdAt).toISOString().slice(0, 7); // Year-month format
+    if (!result[monthYear]) {
+      result[monthYear] = { invited: 0 };
+    }
+    result[monthYear].invited++;
+    return result;
+  }, {});
+
+  // Merge main card month-wise counts and temp card month-wise counts
+  const mergedMonthWiseCounts = { ...mainCardMonthWiseCounts };
+
+  // Merge temp card counts into the mergedMonthWiseCounts, adding invited counts and keeping existing incoming/outgoing
+  Object.keys(tempCardsMonthWiseCounts).forEach((monthYear) => {
+    if (!mergedMonthWiseCounts[monthYear]) {
+      mergedMonthWiseCounts[monthYear] = {
+        incoming: 0,
+        outgoing: 0,
+        invited: 0,
+      };
+    }
+    mergedMonthWiseCounts[monthYear].invited +=
+      tempCardsMonthWiseCounts[monthYear].invited;
+  });
+
+  return res.status(200).json({
+    status: true,
+    data: {
+      totalPoints,
+      friendListLength,
+      monthWiseCounts: mergedMonthWiseCounts,
+    },
+  });
+});
+
+
+
+
+

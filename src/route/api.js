@@ -125,5 +125,5 @@ router.get('/user/check-card/card/:cardId', authVerifyMiddleware.authMiddleware,
 router.get('/card/:id/notifications', authVerifyMiddleware.authMiddleware, showAllNotifications)
 
 router.put('/get-visitor-count', cardController.countTotalVisitior)
-
+router.get("/card/analyze-data/:id", cardController.cardAnalyticalData);
 module.exports = router

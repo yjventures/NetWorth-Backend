@@ -101,6 +101,10 @@ const cardSchema = mongoose.Schema(
     count: {
       type: Number,
       default: 0
+    },
+    total_points: {
+      type: Number,
+      default: 0
     }
   },
   {

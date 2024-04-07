@@ -80,9 +80,25 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
   }
 
   // Check if the recipient is already in the sender's outgoing_friend_request
-  const existsInOutgoing = senderCard.outgoing_friend_request.some(card => card.toString() === recipient_id.toString());
+  const existsInOutgoing = senderCard.outgoing_friend_request.some(
+    (card) => card.toString() === recipient_id.toString()
+  );
 
   if (!existsInOutgoing) {
+    // Check if sender or recipient is already connected
+    const senderIsConnected = senderCard.friend_list.some(
+      (friend) => friend.friend.toString() === recipient_id.toString()
+    );
+    const recipientIsConnected = recipientCard.friend_list.some(
+      (friend) => friend.friend.toString() === sender_id.toString()
+    );
+
+    if (senderIsConnected || recipientIsConnected) {
+      return next(
+        new ErrorHandler(403, "You are already connected with this user.")
+      );
+    }
+
     // Add recipientCard to sender's outgoing_friend_request
     senderCard.outgoing_friend_request.push(recipientCard);
 
@@ -103,9 +119,12 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
     await senderCard.save();
     await recipientCard.save();
   } else {
-    // If already exists, return an error
+    // If already exists in outgoing_friend_request, return an error
     return next(
-      new ErrorHandler(403, "You have already sent a connection request to this user.")
+      new ErrorHandler(
+        403,
+        "You have already sent a connection request to this user."
+      )
     );
   }
 
@@ -114,6 +133,7 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
     message: "Connection request sent successfully.",
   });
 });
+
 
 
 //accept connection invitation
@@ -146,7 +166,7 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     recipientCard.friend_list.push({
       friend: sender_id,
       from: "incoming",
-      time_stamp: new Date()
+      time_stamp: new Date(),
     });
 
     // Remove recipient_id from senderCard's outgoing_friend_request
@@ -158,7 +178,7 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     // Add recipient_id to senderCard's friend_list with a timestamp
     senderCard.friend_list.push({
       friend: recipient_id,
-      time_stamp: new Date()
+      time_stamp: new Date(),
     });
   } else if (isInOutgoing) {
     // Remove recipient_id from senderCard's outgoing_friend_request
@@ -170,7 +190,7 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     // Add recipient_id to senderCard's friend_list with a timestamp
     senderCard.friend_list.push({
       friend: recipient_id,
-      time_stamp: new Date()
+      time_stamp: new Date(),
     });
 
     // Remove sender_id from recipientCard's incoming_friend_request
@@ -182,7 +202,7 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     // Add sender_id to recipientCard's friend_list with a timestamp
     recipientCard.friend_list.push({
       friend: sender_id,
-      time_stamp: new Date()
+      time_stamp: new Date(),
     });
   } else {
     // If sender is not in either list, return an error
@@ -194,9 +214,16 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     );
   }
 
+  // Increment points for receiver and sender
+  const pointsForReceiver = 250;
+  const pointsForSender = 150;
+
+  recipientCard.total_points += pointsForReceiver;
+  senderCard.total_points += pointsForSender;
+
   const notification = await notificationModel.create({
     sender: sender_id,
-    receiver:  recipient_id,
+    receiver: recipient_id,
     text: "accepted your connection request",
   });
 
@@ -374,3 +401,4 @@ exports.cancelOutgoingRequest = catchAsync(async (req, res, next) => {
     message: "Connection Request Cancelled",
   });
 });
+
