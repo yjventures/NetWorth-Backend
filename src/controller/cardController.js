@@ -686,6 +686,13 @@ exports.cardAnalyticalData = catchAsync(async (req, res, next) => {
       }
     );
 
+    // Sort monthWiseCountsArray by month in ascending order
+    monthWiseCountsArray.sort((a, b) => {
+      const dateA = new Date(a.month + " 01");
+      const dateB = new Date(b.month + " 01");
+      return dateA - dateB;
+    });
+
     return res.status(200).json({
       status: true,
       data: {
@@ -698,4 +705,5 @@ exports.cardAnalyticalData = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(500, "Internal Server Error"));
   }
 });
+
 
