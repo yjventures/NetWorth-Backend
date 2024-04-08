@@ -126,4 +126,21 @@ router.get('/card/:id/notifications', authVerifyMiddleware.authMiddleware, showA
 
 router.put('/get-visitor-count', cardController.countTotalVisitior)
 router.get("/card/analyze-data/:id", cardController.cardAnalyticalData);
+router.get(
+  "/card/get-unread-notification/:id",
+  // authVerifyMiddleware.authMiddleware,
+  connectionController.countUnreadNotifications
+);
+router.get(
+  "/card/get-unread-notification-id/:id",
+  // authVerifyMiddleware.authMiddleware,
+  connectionController.getUnreadNotificationIds
+);
+
+router.put(
+  "/card/set-notification-read/:id",
+  // authVerifyMiddleware.authMiddleware,
+  connectionController.markNotificationsAsRead
+);
+
 module.exports = router

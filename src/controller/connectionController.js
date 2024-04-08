@@ -134,8 +134,6 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
   });
 });
 
-
-
 //accept connection invitation
 exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
   const { recipient_id, sender_id } = req.body;
@@ -238,7 +236,6 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     message: "Connection request accepted. Users are now friends.",
   });
 });
-
 
 //show incoming request
 exports.showInComingRequestList = catchAsync(async (req, res, next) => {
@@ -402,3 +399,77 @@ exports.cancelOutgoingRequest = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.countUnreadNotifications = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
+
+  try {
+    const card = await cardModel.findById(id).populate("notifications")
+    if (!card) {
+      return next(new ErrorHandler(404, "Card not found"));
+    }
+
+    // Filter notifications where read is false
+    const unreadNotifications = card.notifications.filter(
+      (notification) => notification.read === false
+    );
+
+    // console.log(unreadNotifications)
+    const unreadCount = unreadNotifications.length;
+
+    return res.status(200).json({
+      status: true,
+      data: {
+        unreadCount,
+      },
+    });
+  } catch (error) {
+    return next(new ErrorHandler(500, "Internal Server Error"));
+  }
+});
+
+exports.getUnreadNotificationIds = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
+
+  try {
+    const card = await cardModel.findById(id).populate("notifications");
+    if (!card) {
+      return next(new ErrorHandler(404, "Card not found"));
+    }
+
+    // Filter notifications where read is false and extract their _id values
+    const unreadNotificationIds = card.notifications
+      .filter((notification) => !notification.read)
+      .map((notification) => notification._id);
+
+    return res.status(200).json({
+      status: true,
+      data: unreadNotificationIds,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(500, "Internal Server Error"));
+  }
+});
+
+exports.markNotificationsAsRead = catchAsync(async (req, res, next) => {
+  const { notificationIds } = req.body;
+
+  try {
+    // Check if notificationIds array is provided
+    if (!notificationIds || !Array.isArray(notificationIds)) {
+      return next(new ErrorHandler(400, "Notification IDs array is required"));
+    }
+
+    // Update notifications with provided IDs to set read field to true
+    await notificationModel.updateMany(
+      { _id: { $in: notificationIds } },
+      { $set: { read: true } }
+    );
+
+    return res.status(200).json({
+      status: true,
+      message: "Notifications marked as read successfully",
+    });
+  } catch (error) {
+    return next(new ErrorHandler(500, error));
+  }
+});
