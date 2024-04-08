@@ -673,15 +673,29 @@ exports.cardAnalyticalData = catchAsync(async (req, res, next) => {
         card.invite_in_platform.number;
     }
 
+    // Convert mainCardMonthWiseCounts object to array of objects with modified format
+    const monthWiseCountsArray = Object.keys(mainCardMonthWiseCounts).map(
+      (key) => {
+        return {
+          month: new Date(key + "-01").toLocaleString("en-us", {
+            month: "short",
+            year: "numeric",
+          }), // Convert to short month format
+          ...mainCardMonthWiseCounts[key],
+        };
+      }
+    );
+
     return res.status(200).json({
       status: true,
       data: {
         totalPoints,
         friendListLength,
-        monthWiseCounts: mainCardMonthWiseCounts,
+        monthWiseCounts: monthWiseCountsArray,
       },
     });
   } catch (error) {
     return next(new ErrorHandler(500, "Internal Server Error"));
   }
 });
+
