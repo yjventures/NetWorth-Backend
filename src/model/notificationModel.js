@@ -20,6 +20,9 @@ const notificationSchema = mongoose.Schema(
     read: {
       type: Boolean,
       default: false,
+    },
+    redirect_url: {
+      type: String,
     }
   },
   {

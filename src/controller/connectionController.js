@@ -110,6 +110,7 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
       sender: sender_id,
       receiver: recipient_id,
       text: "requested to connect",
+      redirect_url: `${process.env.NOTIFICATION_REDIRECT_URL}/${sender_id}?from=outgoing_request`,
     });
 
     // Add notification to recipient's notifications
@@ -223,6 +224,7 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     sender: sender_id,
     receiver: recipient_id,
     text: "accepted your connection request",
+    redirect_url: `${process.env.NOTIFICATION_REDIRECT_URL}/${recipient_id}?from=incoming_request`,
   });
 
   senderCard.notifications.push(notification?._id);
