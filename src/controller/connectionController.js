@@ -100,11 +100,11 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
 
     // Create notification
     const notification = await notificationModel.create({
-      sender: sender_id,
-      receiver: recipient_id,
-      text: 'requested to connect',
+      sender: recipient_id,
+      receiver: sender_id,
+      text: "requested to connect",
       redirect_url: `/cards/${sender_id}?from=incoming_request`,
-    })
+    });
 
     // Add notification to recipient's notifications
     recipientCard.notifications.push(notification._id)
@@ -200,9 +200,9 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
   const notification = await notificationModel.create({
     sender: sender_id,
     receiver: recipient_id,
-    text: 'accepted your connection request',
+    text: "accepted your connection request",
     redirect_url: `/cards/${recipient_id}?from=outgoing_request`,
-  })
+  });
 
   senderCard.notifications.push(notification?._id)
 
