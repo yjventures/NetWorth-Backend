@@ -6,6 +6,7 @@ const userBcrypt = require("../utils/userBcrypt");
 const SendEmailUtils = require("../utils/SendEmailUtils");
 const otpGenerator = require("otp-generator");
 const OTPModel = require("../model/OTPModel");
+const fcmModel = require("../model/fcmModel")
 const {
   AzureKeyCredential,
   DocumentAnalysisClient,
@@ -174,7 +175,7 @@ exports.analyzeDocument = catchAsync(async (req, res, next) => {
 
 //user login
 exports.login = catchAsync(async (req, res, next) => {
-  const { email, password } = req.body;
+  const { email, password, fcmToken } = req.body;
 
   const user = await userModel.findOne({ email }).select("+password");
 
@@ -208,6 +209,23 @@ exports.login = catchAsync(async (req, res, next) => {
   //   const emailMessage = `Your Pin Code is: ${OTPCode}`;
   //   const emailSubject = "NetWorth";
   //   const emailSend = await SendEmailUtils(email, emailMessage, emailSubject);
+
+  const fcmExists = await fcmModel.findOne({
+    user_id: user?._id,
+    fcm_token: fcmToken,
+  });
+
+  if (!fcmExists) {
+    const fcm = await fcmModel.create({
+      card_id: user?._id,
+      fcm_token: fcmToken,
+    });
+    console.log("New FCM token created:", fcm);
+  } else {
+    fcmExists.updatedAt = new Date();
+    await fcmExists.save();
+  }
+
 
   const accessToken = jwt.sign(
     {
