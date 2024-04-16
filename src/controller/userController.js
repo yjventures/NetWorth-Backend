@@ -217,7 +217,7 @@ exports.login = catchAsync(async (req, res, next) => {
 
   if (!fcmExists) {
     const fcm = await fcmModel.create({
-      card_id: user?._id,
+      user_id: user?._id,
       fcm_token: fcmToken,
     });
     console.log("New FCM token created:", fcm);
