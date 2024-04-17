@@ -139,8 +139,27 @@ router.get(
 
 router.put(
   "/card/set-notification-read/:id",
-  // authVerifyMiddleware.authMiddleware,
+  authVerifyMiddleware.authMiddleware,
   connectionController.markNotificationsAsRead
 );
+router.put(
+  "/admin/add-admin",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.addAdminTeamMember
+);
+router.post(
+  "/admin/check-temp-password",
+  adminController.checkTempPasswordAsAdmin
+);
 
+router.put(
+  "/admin/member/:invitedUserId",
+  adminController.confirmMemberRegistration
+);
+
+router.get(
+  "/admin/team-member",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.showAllAdmin
+);
 module.exports = router

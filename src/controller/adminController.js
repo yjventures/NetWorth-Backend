@@ -5,17 +5,22 @@ const SendEmailUtils = require("../utils/SendEmailUtils");
 const ErrorHandler = require("../utils/errorHandler");
 const userBcrypt = require("../utils/userBcrypt");
 const jwt = require("jsonwebtoken");
-
+const generator = require("generate-password");
+const personalInfoModel = require("../model/personalInfoModel");
+const tempPasswordModel = require("../model/tempPasswordModel");
+const {
+  generateLinkForTeamMember,
+} = require("../utils/encryptAndDecryptUtils");
 exports.adminLogin = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return next(new ErrorHandler(400, "Email Or Password Required"));
   }
-  const adminEmail = process.env.ADMIN_EMAIL;
+  // const adminEmail = process.env.ADMIN_EMAIL;
 
-  if (email !== adminEmail) {
-    return next(new ErrorHandler(403, "You Are Not Authorized"));
-  }
+  // if (email !== adminEmail) {
+  //   return next(new ErrorHandler(403, "You Are Not Authorized"));
+  // }
 
   const user = await userModel.findOne({ email: email, role: "admin" });
 
@@ -168,5 +173,182 @@ exports.getAllFriendsListByCardId = catchAsync(async (req, res, next) => {
   return res.status(200).json({
     status: true,
     data: card,
+  });
+});
+
+exports.addAdminTeamMember = async (req, res) => {
+  const role = req.headers.role;
+  const reqBody = req.body;
+  try {
+    if (role !== "admin") {
+      return res.status(200).json({
+        status: "fail",
+        message: "You are not allowed to add this team member feature",
+      });
+    }
+    let newMemberInfo;
+    const passwordCode = generator.generate({
+      length: 20,
+      numbers: true,
+    });
+
+    const existUser = await userModel.findOne({ email: reqBody?.email });
+
+    if (existUser) {
+      return res.status(400).json({
+        status: "fail",
+        message: "user is already registered in this platform",
+      });
+    }
+
+    const personalInfo = await personalInfoModel.create({
+      name: reqBody.name,
+    });
+
+    const newTeamMember = await userModel.create({
+      email: reqBody.email,
+      // admin_role: reqBody.role,
+      role: "admin",
+      password: passwordCode,
+      personal_info: personalInfo?._id,
+    });
+
+    newMemberInfo = newTeamMember;
+
+    const userCount = await userModel.aggregate([
+      { $match: { email: reqBody.email } },
+      { $count: "total" },
+    ]);
+
+    if (userCount.length > 0) {
+      // Insert OTP into the database
+      await tempPasswordModel.create({
+        email: reqBody.email,
+        password: passwordCode,
+      });
+      const confirmationToken = generateLinkForTeamMember(newMemberInfo.email);
+
+      // Send a confirmation email to the user
+      const emailMessage = `your temp password is  ${passwordCode} <br/> Click here to confirm your invitation as Admin: ${confirmationToken}`;
+
+      const emailSubject = "NetworthHub System Invitation Account Confirmation";
+      const emailSend = await SendEmailUtils(
+        newMemberInfo.email,
+        emailMessage,
+        emailSubject
+      );
+      newMemberInfo.password = undefined;
+      res.status(200).json({
+        status: true,
+        message: "Mail successfully sent to the invited member mail",
+        data: newMemberInfo,
+        emailInfo: emailSend,
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: err.message });
+  }
+};
+
+exports.checkTempPasswordAsAdmin = async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await userModel.findOne({
+    email: email,
+    password: password,
+    role: "admin",
+  });
+
+  // console.log("email",email)
+
+  if (!user) {
+    return res.status(401).json({ message: "Invalid credentials." });
+  }
+
+  let status = 0;
+  try {
+    const passwordCount = await tempPasswordModel.aggregate([
+      { $match: { email: email, password: password, status: status } },
+      { $count: "total" },
+    ]);
+
+    if (passwordCount.length > 0) {
+      await tempPasswordModel.updateOne(
+        { email, password, status: status },
+        { email, password, status: 1 }
+      );
+
+      return res.status(200).json({
+        status: true,
+        message: "temp password verified successfully.",
+        data: user,
+      });
+    } else {
+      return res.status(401).json({ message: "Invalid OTP." });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+exports.confirmMemberRegistration = async (req, res) => {
+  try {
+    const password = req.body.password;
+    const invitedUserId = req.params.invitedUserId;
+
+    const user = await userModel.findById(invitedUserId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    const regex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%*?&])[A-Za-z\d@.#$!%*?&]{8,15}$/;
+
+    if (!regex.test(password)) {
+      return res.status(400).json({
+        status: "fail",
+        message:
+          "Invalid password format. Password must have at least one lowercase letter, one uppercase letter, one digit, one special character, and be 8-15 characters long.",
+      });
+    }
+
+    const hashedPassword = await userBcrypt.hashPassword(password);
+
+    user.password = hashedPassword;
+    user.is_verified = true;
+    user.is_completed_personal_info = true;
+
+    // Save the updated user
+    await user.save();
+
+    user.password = undefined;
+
+    res.status(200).json({
+      status: true,
+      data: user,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+exports.showAllAdmin = catchAsync(async (req, res, next) => {
+  const role = req.headers.role;
+
+  if (role !== "admin") {
+    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  }
+
+  const users = await userModel
+    .find({ role: "admin" })
+    .populate({ path: "personal_info", select: "name" });
+
+  return res.status(200).json({
+    status: true,
+    data: users,
   });
 });
