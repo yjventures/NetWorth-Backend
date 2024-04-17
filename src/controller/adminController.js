@@ -11,6 +11,9 @@ const tempPasswordModel = require("../model/tempPasswordModel");
 const {
   generateLinkForTeamMember,
 } = require("../utils/encryptAndDecryptUtils");
+const moment = require("moment");
+const tempCardModel = require("../model/tempCardModel");
+
 exports.adminLogin = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -352,3 +355,85 @@ exports.showAllAdmin = catchAsync(async (req, res, next) => {
     data: users,
   });
 });
+
+exports.showAllStatistics = catchAsync(async (req, res, next) => {
+  const role = req.headers.role;
+
+  if (role !== "admin") {
+    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  }
+
+  const filter = req.query.filter; // Get the filter from query parameters
+
+  let startDate, endDate;
+
+  // Set start and end dates based on the filter
+  switch (filter) {
+    case "12months":
+      startDate = moment().subtract(12, "months").startOf("day");
+      endDate = moment().endOf("day");
+      break;
+    case "30days":
+      startDate = moment().subtract(30, "days").startOf("day");
+      endDate = moment().endOf("day");
+      break;
+    case "7days":
+      startDate = moment().subtract(7, "days").startOf("day");
+      endDate = moment().endOf("day");
+      break;
+    case "24hours":
+      startDate = moment().subtract(24, "hours").startOf("hour");
+      endDate = moment().endOf("hour");
+      break;
+    case "all": // Added "all" option
+      startDate = moment(0); // Start of time
+      endDate = moment().endOf("day");
+      break;
+    default:
+      // Default to showing all data
+      startDate = moment(0); // Start of time
+      endDate = moment().endOf("day");
+  }
+
+  // Assuming "userModel" is your User model
+  const userModelLength = await userModel.countDocuments({
+    createdAt: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+  });
+
+  const cardModelLength = await cardModel.countDocuments({
+    createdAt: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+  });
+
+  const inviteInPlatForm = await tempCardModel.countDocuments({
+    createdAt: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+  });
+
+  const signUpCount = await cardModel.countDocuments({
+    createdAt: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+    via_invitation: true,
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      totalUsersCount: userModelLength,
+      totalCardsCount: cardModelLength,
+      invitesPlatformCount: inviteInPlatForm,
+      inviteSignUpCount: signUpCount,
+    },
+  });
+});
+
+

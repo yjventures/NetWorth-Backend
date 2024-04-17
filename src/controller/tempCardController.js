@@ -153,7 +153,7 @@ exports.createNewCard = catchAsync(async (req, res, next) => {
       card.friend_list.push(newCard._id);
       newCard.friend_list.push(inviteeCardId);
       user.cards.push(newCard?._id);
-
+      newCard.via_invitation = true;
       const notification = await notificationModel.create({
         sender: card?._id,
         receiver: newCard?._id,

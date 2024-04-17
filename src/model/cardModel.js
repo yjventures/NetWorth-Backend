@@ -116,6 +116,10 @@ const cardSchema = mongoose.Schema(
         default: Date.now,
       },
     },
+    via_invitation: {
+      type: Boolean,
+      default: false,
+    }
   },
   {
     versionKey: false,

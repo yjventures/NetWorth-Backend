@@ -162,4 +162,10 @@ router.get(
   authVerifyMiddleware.adminMiddleware,
   adminController.showAllAdmin
 );
+
+router.get(
+  "/admin/statistics",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.showAllStatistics
+);
 module.exports = router
