@@ -437,3 +437,56 @@ exports.showAllStatistics = catchAsync(async (req, res, next) => {
 });
 
 
+exports.getBarData = catchAsync(async (req, res, next) => {
+  const role = req.headers.role;
+
+  if (role !== "admin") {
+    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  }
+
+  const startDate = moment().subtract(12, "months").startOf("month"); // Start 12 months ago
+  const endDate = moment().endOf("month"); // End of current month
+
+  // Array to hold monthly data
+  const monthlyData = [];
+
+  // Loop through each month in the range
+  for (
+    let date = startDate.clone();
+    date.isBefore(endDate);
+    date.add(1, "month")
+  ) {
+    const monthStart = date.clone().startOf("month");
+    const monthEnd = date.clone().endOf("month");
+
+    const inviteInPlatFormCount = await tempCardModel.countDocuments({
+      createdAt: {
+        $gte: monthStart,
+        $lte: monthEnd,
+      },
+    });
+
+    const signUpCount = await cardModel.countDocuments({
+      createdAt: {
+        $gte: monthStart,
+        $lte: monthEnd,
+      },
+      via_invitation: true,
+    });
+
+    // Format the date as "MMM DD"
+    const formattedDate = date.format("MMM YY");
+
+    // Add data for this month to the array
+    monthlyData.push({
+      date: formattedDate,
+      inviteInPlatForm: inviteInPlatFormCount,
+      signUpViaInvitation: signUpCount,
+    });
+  }
+
+  res.status(200).json({
+    status: false,
+    data: monthlyData,
+  });
+});

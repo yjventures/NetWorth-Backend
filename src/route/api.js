@@ -168,4 +168,10 @@ router.get(
   authVerifyMiddleware.adminMiddleware,
   adminController.showAllStatistics
 );
+
+router.get(
+  "/admin/dashboard-bar-data",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.getBarData
+);
 module.exports = router
