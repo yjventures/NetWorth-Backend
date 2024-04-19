@@ -2,6 +2,7 @@
 const express = require("express");
 const router = require("./src/route/api");
 const app = new express();
+const bodyParser = require('body-parser'); //added by abrar (in conjunction with nginx fix)
 
 const { connectToDB } = require("./src/config/dbConnection");
 
@@ -18,6 +19,8 @@ app.use(helmet());
 app.use(express.json());
 app.use(cors());
 app.use(mongoSanitize());
+app.use(bodyParser.json({limit: '1500mb'})); 
+app.use(bodyParser.urlencoded({limit: '1500mb', extended: true}));
 
 
 //database connection
