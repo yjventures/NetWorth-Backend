@@ -682,11 +682,22 @@ exports.getEnabledAIToken = catchAsync(async (req, res, next) => {
       throw new ErrorHandler(404, "No enabled AI token found");
     }
 
+    // Decrypt the api_key field
+    const decryptedApiKey = decryptData(
+      enabledAIToken.api_key,
+      process.env.AI_ENCRYPTION_KEY
+    );
+
+    // Send the response with decrypted api_key
     res.status(200).json({
       status: true,
-      data: enabledAIToken,
+      data: {
+        ...enabledAIToken.toJSON(),
+        api_key: decryptedApiKey,
+      },
     });
   } catch (error) {
     next(error);
   }
 });
+
