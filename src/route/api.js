@@ -295,5 +295,10 @@ router.put(
   authVerifyMiddleware.adminMiddleware,
   adminController.updateAIToken
 );
+router.get(
+  "/admin/ai",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.getAllTokens
+);
 
 module.exports = router;

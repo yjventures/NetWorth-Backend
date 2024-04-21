@@ -576,3 +576,67 @@ exports.updateAIToken = catchAsync(async (req, res, next) => {
     return next(error);
   }
 });
+
+
+exports.getAllTokens = catchAsync(async (req, res, next) => {
+  try {
+    const role = req.headers.role;
+
+    if (role !== "admin") {
+      return next(new ErrorHandler(401, "You Are Not Authorized"));
+    }
+
+    // Pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Sorting
+    const sortBy = req.query.sortBy || "createdAt";
+    const sortOrder = req.query.sortOrder || "desc";
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === "asc" ? 1 : -1;
+
+    // Retrieve total count of documents
+    const totalDocs = await aiModel.countDocuments();
+
+    // Calculate total number of pages
+    const totalPages = Math.ceil(totalDocs / limit);
+
+    // Retrieve AI tokens from the database with pagination and sorting
+    const aiTokens = await aiModel
+      .find()
+      .skip(skip)
+      .limit(limit)
+      .sort(sortOptions);
+
+    // Decrypt the api_key field for each AI token
+    const decryptedTokens = aiTokens.map((aiToken) => {
+      // Assuming `api_key` field is encrypted and stored as a string
+      const decryptedApiKey = decryptData(
+        aiToken.api_key,
+        process.env.AI_ENCRYPTION_KEY
+      );
+      // Return a new object with decrypted api_key
+      return {
+        ...aiToken.toJSON(),
+        api_key: decryptedApiKey,
+      };
+    });
+
+    // Send the response with decrypted data and pagination metadata
+    res.status(200).json({
+      status: true,
+      metadata: {
+        page: page,
+        limit: limit,
+        totalLength: totalDocs,
+        totalPages: totalPages,
+      },
+      data: decryptedTokens,
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
