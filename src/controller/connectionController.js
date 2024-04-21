@@ -12,6 +12,8 @@ const notificationModel = require("../model/notificationModel");
 const { sendMultiplePushNotification } = require("../utils/fcmUtils");
 
 exports.searchContact = catchAsync(async (req, res, next) => {
+  const userId = req.headers.userId;
+
   const { search, country, city, designation } = req.query;
   let query = {};
 
