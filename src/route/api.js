@@ -290,5 +290,10 @@ router.delete(
   authVerifyMiddleware.adminMiddleware,
   adminController.deleteAIToken
 );
+router.put(
+  "/admin/ai/:id",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.updateAIToken
+);
 
 module.exports = router;

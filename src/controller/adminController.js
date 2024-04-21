@@ -540,4 +540,39 @@ exports.deleteAIToken = catchAsync(async (req, res, next) => {
     message: "AI token deleted successfully",
     data: aiToken,
   });
-} )
+})
+
+exports.updateAIToken = catchAsync(async (req, res, next) => {
+  try {
+    const role = req.headers.role;
+    const id = req.params.id;
+
+    if (role !== "admin") {
+      return next(new ErrorHandler(401, "You Are Not Authorized"));
+    }
+
+    const reqBody = req.body;
+
+    // Check if the request body contains the api_key field
+    if (reqBody.api_key) {
+      // Encrypt the new API key before updating
+      const aiEncryptionKey = process.env.AI_ENCRYPTION_KEY;
+      reqBody.api_key = encryptData(reqBody.api_key, aiEncryptionKey);
+    }
+
+    const aiToken = await aiModel.findByIdAndUpdate(id, reqBody, {
+      new: true,
+    });
+
+    if (!aiToken) {
+      return next(new ErrorHandler(404, "AI Token not found"));
+    }
+
+    res.status(200).json({
+      status: true,
+      data: aiToken,
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
