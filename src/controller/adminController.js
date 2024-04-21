@@ -579,7 +579,7 @@ exports.updateAIToken = catchAsync(async (req, res, next) => {
 
 
 exports.getAllTokens = catchAsync(async (req, res, next) => {
-  try {
+
     const role = req.headers.role;
 
     if (role !== "admin") {
@@ -635,8 +635,58 @@ exports.getAllTokens = catchAsync(async (req, res, next) => {
       },
       data: decryptedTokens,
     });
+  
+});
+
+exports.enabledAIToken = catchAsync(async (req, res, next) => {
+  try {
+    const role = req.headers.role;
+    const id = req.params.id;
+
+    if (role !== "admin") {
+      return next(new ErrorHandler(401, "You Are Not Authorized"));
+    }
+
+    // Update the document with the provided ID to set isEnabled to true
+    const updatedToken = await aiModel.findByIdAndUpdate(
+      id,
+      { isEnabled: true },
+      {
+        new: true,
+      }
+    );
+
+    // Update all other documents to set isEnabled to false
+    await aiModel.updateMany({ _id: { $ne: id } }, { isEnabled: false });
+
+    res.status(200).json({
+      status: true,
+      data: updatedToken,
+    });
   } catch (error) {
     return next(error);
   }
 });
 
+exports.getEnabledAIToken = catchAsync(async (req, res, next) => {
+  try {
+    const role = req.headers.role;
+
+    if (role !== "admin") {
+      throw new ErrorHandler(401, "You Are Not Authorized");
+    }
+
+    const enabledAIToken = await aiModel.findOne({ isEnabled: true });
+
+    if (!enabledAIToken) {
+      throw new ErrorHandler(404, "No enabled AI token found");
+    }
+
+    res.status(200).json({
+      status: true,
+      data: enabledAIToken,
+    });
+  } catch (error) {
+    next(error);
+  }
+});

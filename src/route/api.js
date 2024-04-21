@@ -300,5 +300,14 @@ router.get(
   authVerifyMiddleware.adminMiddleware,
   adminController.getAllTokens
 );
-
+router.get(
+  "/admin/ai/enabled/:id",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.enabledAIToken
+);
+router.get(
+  "/admin/ai/enabled",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.getEnabledAIToken
+);
 module.exports = router;

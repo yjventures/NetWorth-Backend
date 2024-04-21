@@ -28,7 +28,7 @@ const aiSchema = mongoose.Schema(
     },
     isEnabled: {
       type: Boolean,
-      required: true,
+      required: false,
     }
   },
   {
