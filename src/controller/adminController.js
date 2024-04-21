@@ -11,8 +11,11 @@ const tempPasswordModel = require("../model/tempPasswordModel");
 const {
   generateLinkForTeamMember,
 } = require("../utils/encryptAndDecryptUtils");
+const { encryptData, decryptData } = require("../utils/encryptAndDecryptUtils");
+const aiModel = require("../model/AITokenModel")
 const moment = require("moment");
 const tempCardModel = require("../model/tempCardModel");
+
 
 exports.adminLogin = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
@@ -436,7 +439,6 @@ exports.showAllStatistics = catchAsync(async (req, res, next) => {
   });
 });
 
-
 exports.getBarData = catchAsync(async (req, res, next) => {
   const role = req.headers.role;
 
@@ -490,3 +492,52 @@ exports.getBarData = catchAsync(async (req, res, next) => {
     data: monthlyData,
   });
 });
+
+exports.createAIToken = catchAsync(async (req, res, next) => {
+  const role = req.headers.role;
+
+  if (role !== "admin") {
+    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  }
+
+  // Extract API key from the request body
+  const apiKey = req.body.api_key;
+
+  const aiEncryptionKey = process.env.AI_ENCRYPTION_KEY;
+  // Encrypt the API key before storing it
+  const hashedApiKey = encryptData(apiKey, aiEncryptionKey);
+
+  // Create new AI token document
+  const aiToken = await aiModel.create({
+    token_name: req.body.token_name,
+    enable_model: req.body.enable_model,
+    api_key: hashedApiKey,
+    max_token: req.body.max_token,
+    frequency_penalty: req.body.frequency_penalty,
+    temperature: req.body.temperature,
+    isEnabled: req.body.isEnabled,
+  });
+
+  res.status(200).json({
+    status: true,
+    data: aiToken,
+  });
+});
+
+exports.deleteAIToken = catchAsync(async (req, res, next) => {
+  const role = req.headers.role;
+  const tokenId = req.params.id;
+
+  if (role !== "admin") {
+    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  }
+
+  // Create new AI token document
+  const aiToken = await aiModel.findByIdAndDelete(tokenId);
+
+  res.status(200).json({
+    status: true,
+    message: "AI token deleted successfully",
+    data: aiToken,
+  });
+} )

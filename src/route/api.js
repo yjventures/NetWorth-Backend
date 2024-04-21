@@ -279,4 +279,16 @@ router.get(
   authVerifyMiddleware.adminMiddleware,
   adminController.getBarData
 );
+
+router.post(
+  "/admin/ai",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.createAIToken
+);
+router.delete(
+  "/admin/ai/:id",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.deleteAIToken
+);
+
 module.exports = router;
