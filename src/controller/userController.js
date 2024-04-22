@@ -519,4 +519,47 @@ exports.RecoverResetPassword = catchAsync(async (req, res) => {
   }
 });
 
+exports.changePassword = catchAsync(async (req, res, next) => {
+  const userId = req.headers.userId;
+  const { old_password, new_password} = req.body;
+  const user = await userModel.findById(userId);
+  if (!user) {
+    return next(new ErrorHandler(400, "You Are Not Authorized"));
+  }
+
+  //match old password
+  const match = await userBcrypt.comparePassword(old_password, user.password);
+
+  // console.log(match)
+  if (!match) {
+    return next(new ErrorHandler(400, "Old password is incorrect"));
+  }
+
+  //hash new password
+  if (!regex.test(new_password)) {
+    return next(
+      new ErrorHandler(
+        400,
+        "Invalid password format. Password must have at least one lowercase letter, one uppercase letter, one digit, one special character, and be 8-15 characters long."
+      )
+    );
+  }
+  //hashed the password
+  const hashedPassword = await userBcrypt.hashPassword(new_password);
+  const passwordUpdate = await userModel.findByIdAndUpdate(
+    userId,
+    { password: hashedPassword },
+    { new: true, runValidators: true }
+  );
+
+  if (!passwordUpdate) {
+    return next(new ErrorHandler(404, "Password not updated"));
+  }
+
+  return res.status(200).json({
+    status: true,
+    message: "Password updated successfully",
+    // data: passwordUpdate,
+  });
+})
 
