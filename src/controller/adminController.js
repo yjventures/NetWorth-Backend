@@ -551,6 +551,34 @@ exports.updateAIToken = catchAsync(async (req, res, next) => {
   }
 })
 
+exports.getToken = catchAsync(async (req, res, next) => {
+  const role = req.headers.role
+  if (role !== 'admin') {
+    return next(new ErrorHandler(401, 'You Are Not Authorized'))
+  }
+
+  const aiToken = aiModel.findById(req.params.id)
+
+  if (!aiToken) {
+    return next(new ErrorHandler(404, 'AI Token not found'))
+  }
+
+  // const decryptedApiKey = decryptData(aiToken.api_key, process.env.AI_ENCRYPTION_KEY)
+
+  // console.log(decryptedApiKey)
+  // // Return a new object with decrypted api_key
+  // const decryptedToken = {
+  //   ...aiToken.toJSON(),
+  //   api_key: decryptedApiKey,
+  // }
+
+  // Send the response with decrypted data and pagination metadata
+  res.status(200).json({
+    status: true,
+    data: aiToken,
+  })
+})
+
 exports.getAllTokens = catchAsync(async (req, res, next) => {
   const role = req.headers.role
 

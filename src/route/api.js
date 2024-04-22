@@ -155,13 +155,10 @@ router.get('/admin/dashboard-bar-data', authVerifyMiddleware.adminMiddleware, ad
 
 router.post('/admin/ai', authVerifyMiddleware.adminMiddleware, adminController.createAIToken)
 router.delete('/admin/ai/:id', authVerifyMiddleware.adminMiddleware, adminController.deleteAIToken)
+router.get('/admin/ai/:id', authVerifyMiddleware.adminMiddleware, adminController.getToken)
 router.put('/admin/ai/:id', authVerifyMiddleware.adminMiddleware, adminController.updateAIToken)
 router.get('/admin/ai', authVerifyMiddleware.adminMiddleware, adminController.getAllTokens)
 router.put('/admin/ai/enabled/:id', authVerifyMiddleware.adminMiddleware, adminController.enabledAIToken)
 router.get('/admin/ai/enabled', authVerifyMiddleware.authMiddleware, adminController.getEnabledAIToken)
-router.put(
-  "/user/change-password",
-  authVerifyMiddleware.authMiddleware,
-  userController.changePassword
-);
+router.put('/user/change-password', authVerifyMiddleware.authMiddleware, userController.changePassword)
 module.exports = router
