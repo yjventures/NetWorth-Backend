@@ -20,10 +20,13 @@ exports.showAllNotifications = catchAsync(async (req, res, next) => {
       return next(new ErrorHandler(404, "Something Wrong with Card"));
     }
 
-    const formattedNotifications = card.notifications.map(notification => ({
-      ...notification.toObject(), 
-      time_stamp: moment(notification.time_stamp).fromNow(), 
-    }));
+    // Format notifications and sort by createdAt in descending order
+    const formattedNotifications = card.notifications
+      .map((notification) => ({
+        ...notification.toObject(),
+        time_stamp: moment(notification.createdAt).fromNow(),
+      }))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     return res.status(200).json({
       status: true,
@@ -33,3 +36,4 @@ exports.showAllNotifications = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(500, "Something Wrong with Card"));
   }
 });
+
