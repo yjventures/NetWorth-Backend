@@ -119,6 +119,9 @@ const cardSchema = mongoose.Schema(
     via_invitation: {
       type: Boolean,
       default: false,
+    },
+    calendly_link: {
+      type: String,
     }
   },
   {

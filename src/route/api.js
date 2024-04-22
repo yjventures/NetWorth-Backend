@@ -159,6 +159,6 @@ router.get('/admin/ai/:id', authVerifyMiddleware.adminMiddleware, adminControlle
 router.put('/admin/ai/:id', authVerifyMiddleware.adminMiddleware, adminController.updateAIToken)
 router.get('/admin/ai', authVerifyMiddleware.adminMiddleware, adminController.getAllTokens)
 router.put('/admin/ai/enabled/:id', authVerifyMiddleware.adminMiddleware, adminController.enabledAIToken)
-router.get('/admin/ai/enabled', authVerifyMiddleware.authMiddleware, adminController.getEnabledAIToken)
+router.get('/user/ai/get-enabled-token',authVerifyMiddleware.authMiddleware, adminController.getEnabledAIToken)
 router.put('/user/change-password', authVerifyMiddleware.authMiddleware, userController.changePassword)
 module.exports = router

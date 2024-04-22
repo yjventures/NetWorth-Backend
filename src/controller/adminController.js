@@ -669,14 +669,11 @@ exports.enabledAIToken = catchAsync(async (req, res, next) => {
 
 exports.getEnabledAIToken = catchAsync(async (req, res, next) => {
   try {
-    const role = req.headers.role
-
-    // if (role !== "admin") {
-    //   throw new ErrorHandler(401, "You Are Not Authorized");
-    // }
+    
 
     const enabledAIToken = await aiModel.findOne({ isEnabled: true })
 
+    // console.log(enabledAIToken)
     if (!enabledAIToken) {
       throw new ErrorHandler(404, 'No enabled AI token found')
     }
