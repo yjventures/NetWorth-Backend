@@ -32,6 +32,11 @@ router.post('/user/access-token', userController.generateAccessToken)
 //personal info
 router.put('/user/personal-info', authVerifyMiddleware.authMiddleware, userController.updatePersonalInfo)
 router.get('/user/personal-info', authVerifyMiddleware.authMiddleware, userController.getPersonalInfo)
+router.get(
+  "/admin/personal-info",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.getAdminPersonalInfo
+);
 
 //forgot password
 router.get('/recover-verify-email/:email', userController.RecoverVerifyEmail)

@@ -750,3 +750,27 @@ exports.updateAAdminPersonalInfo = catchAsync(async (req, res, next) => {
     data: updatedPersonalInfo,
   });
 });
+
+exports.getAdminPersonalInfo = catchAsync(async (req, res, next) => {
+  const userId = req.headers.userId;
+  const role = req.headers.role;
+  if (role!== "admin") {
+    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  }
+  const user = await userModel.findById(userId).populate("personal_info");
+
+  // Check if user exists
+  if (!user) {
+    return next(new ErrorHandler(404, "User not found"));
+  }
+
+  // Check if user.cards exists and is not empty before populating
+  // if (user.cards && user.cards.length > 0) {
+  //   await user.populate("cards").execPopulate();
+  // }
+
+  user.password = undefined;
+  return res
+    .status(200)
+    .json({ success: true, data: user });
+});
