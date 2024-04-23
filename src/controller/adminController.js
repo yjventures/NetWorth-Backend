@@ -705,3 +705,44 @@ exports.getEnabledAIToken = catchAsync(async (req, res, next) => {
     next(error)
   }
 })
+
+exports.updateAAdminPersonalInfo = catchAsync(async (req, res, next) => {
+  const userId = req.headers.userId;
+  const role = req.headers.role;
+
+  if (role !== "admin") {
+    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  }
+  
+  const reqBody = req.body;
+  //   console.log(reqBody)
+
+  // Check if the user exists
+  const user = await userModel.findById(userId);
+  if (!user) {
+    return next(new ErrorHandler(400, "You Are Not Authorized"));
+  }
+
+  const personalInfoId = user?.personal_info;
+
+  // Find and update the personal information
+  const updatedPersonalInfo = await personalInfoModel.findByIdAndUpdate(
+    personalInfoId,
+    reqBody,
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedPersonalInfo) {
+    return next(new ErrorHandler(404, "Personal information not found"));
+  }
+
+  //Optionally, update user's personal_info reference
+  user.is_completed_personal_info = true;
+  await user.save();
+
+  return res.status(200).json({
+    status: true,
+    message: "Personal information updated successfully",
+    data: updatedPersonalInfo,
+  });
+});
