@@ -606,9 +606,6 @@ exports.averagePointData = catchAsync(async (req, res, next) => {
   }
 });
 
-
-
-
 exports.topRankings = catchAsync(async (req, res, next) => {
   const userId = req.headers.userId;
   try {

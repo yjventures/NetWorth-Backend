@@ -41,11 +41,19 @@ exports.adminLogin = catchAsync(async (req, res, next) => {
     process.env.ADMIN_SECRET_KEY,
     { expiresIn: process.env.JWT_EXPIRES_IN }
   )
+  const refreshToken = jwt.sign(
+    {
+      userId: user?._id,
+    },
+    process.env.ADMIN_SECRET_KEY,
+    { expiresIn: process.env.JWT_EXPIRES_IN }
+  );
 
   return res.status(200).json({
     success: true,
     message: 'Admin Login Successful',
     accessToken: accessToken,
+    refreshToken: refreshToken,
   })
 })
 
