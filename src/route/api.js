@@ -161,4 +161,9 @@ router.get('/admin/ai', authVerifyMiddleware.adminMiddleware, adminController.ge
 router.put('/admin/ai/enabled/:id', authVerifyMiddleware.adminMiddleware, adminController.enabledAIToken)
 router.get('/user/ai/get-enabled-token',authVerifyMiddleware.authMiddleware, adminController.getEnabledAIToken)
 router.put('/user/change-password', authVerifyMiddleware.authMiddleware, userController.changePassword)
+router.get(
+  "/user/average-point",
+  authVerifyMiddleware.authMiddleware,
+  userController.averagePointData
+);
 module.exports = router

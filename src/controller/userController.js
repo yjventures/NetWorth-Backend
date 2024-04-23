@@ -6,7 +6,7 @@ const userBcrypt = require("../utils/userBcrypt");
 const SendEmailUtils = require("../utils/SendEmailUtils");
 const otpGenerator = require("otp-generator");
 const OTPModel = require("../model/OTPModel");
-const fcmModel = require("../model/fcmModel")
+const fcmModel = require("../model/fcmModel");
 const {
   AzureKeyCredential,
   DocumentAnalysisClient,
@@ -225,7 +225,6 @@ exports.login = catchAsync(async (req, res, next) => {
     fcmExists.updatedAt = new Date();
     await fcmExists.save();
   }
-
 
   const accessToken = jwt.sign(
     {
@@ -521,7 +520,7 @@ exports.RecoverResetPassword = catchAsync(async (req, res) => {
 
 exports.changePassword = catchAsync(async (req, res, next) => {
   const userId = req.headers.userId;
-  const { old_password, new_password} = req.body;
+  const { old_password, new_password } = req.body;
   const user = await userModel.findById(userId);
   if (!user) {
     return next(new ErrorHandler(400, "You Are Not Authorized"));
@@ -561,5 +560,43 @@ exports.changePassword = catchAsync(async (req, res, next) => {
     message: "Password updated successfully",
     // data: passwordUpdate,
   });
-})
+});
 
+exports.averagePointData = catchAsync(async (req, res, next) => {
+  const userId = req.headers.userId;
+  const user = await userModel.findById(userId);
+
+  if (!user) {
+    return next(new ErrorHandler(400, "You Are Not Authorized"));
+  }
+
+  const cardIds = user.cards;
+  if (!cardIds || cardIds.length === 0) {
+    return next(new ErrorHandler(400, "No cards found for the user"));
+  }
+
+  try {
+    // Fetching all card documents referenced by the user
+    const cards = await cardModel.find({ _id: { $in: cardIds } });
+
+    let totalPoints = 0;
+
+    cards.forEach((card) => {
+      // console.log(card)
+      totalPoints += card.total_points || 0;
+    });
+
+    const averagePoints = totalPoints / cards?.length;
+    const averagePointsRounded = averagePoints.toFixed(2);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        averagePoints: averagePointsRounded,
+        totalCards: cards?.length,
+      },
+    });
+  } catch (error) {
+    return next(new ErrorHandler(500, "Internal Server Error"));
+  }
+});
