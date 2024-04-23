@@ -27,11 +27,15 @@ exports.adminLogin = catchAsync(async (req, res, next) => {
 
   const user = await userModel.findOne({ email: email, role: 'admin' })
 
+  if (!user) {
+    return next(new ErrorHandler(404, 'admin Not Found'))
+  }
   const match = await userBcrypt.comparePassword(password, user.password)
   if (!match) {
     return next(new ErrorHandler(400, 'Password Is incorrect'))
   }
 
+  
   const accessToken = jwt.sign(
     {
       userId: user?._id,
@@ -713,7 +717,7 @@ exports.updateAAdminPersonalInfo = catchAsync(async (req, res, next) => {
   if (role !== "admin") {
     return next(new ErrorHandler(401, "You Are Not Authorized"));
   }
-  
+
   const reqBody = req.body;
   //   console.log(reqBody)
 
