@@ -606,3 +606,92 @@ exports.averagePointData = catchAsync(async (req, res, next) => {
   }
 });
 
+
+
+
+exports.topRankings = catchAsync(async (req, res, next) => {
+  const userId = req.headers.userId;
+  try {
+    // Fetch all users and populate the personal_info field
+    const users = await userModel.find().populate({
+      path: "personal_info",
+      select: "name profile_image",
+    });
+
+    // Calculate total points for each user
+    const usersWithTotalPoints = await Promise.all(
+      users.map(async (user) => {
+        const cards = await cardModel.find({ _id: { $in: user.cards } });
+        const totalPoints = cards.reduce(
+          (acc, card) => acc + (card.total_points || 0),
+          0
+        );
+        return { user, totalPoints };
+      })
+    );
+
+    // Sort users by total points in descending order
+    usersWithTotalPoints.sort((a, b) => b.totalPoints - a.totalPoints);
+
+    // Find the user's ranking
+    let ownRanking;
+    let ownId = false;
+    usersWithTotalPoints.forEach((userWithTotalPoints, index) => {
+      if (userWithTotalPoints.user._id.toString() === userId) {
+        ownRanking = index + 1;
+        ownId = true; 
+      }
+    });
+
+    // Prepare response data with ranks, including name and profile_image for top 10
+    let topRankings = usersWithTotalPoints
+      .slice(0, 10)
+      .map(({ user, totalPoints }, index) => ({
+        userId: user._id,
+        username: user.personal_info.name, 
+        profile_image: user.personal_info.profile_image, 
+        totalPoints,
+        ownId: user._id.toString() === userId, 
+        rank: index + 1,
+      }));
+
+    // If the user's ranking is not in the top 10, add their ranking and additional info
+    if (ownId && ownRanking > 10) {
+      console.log("hello world");
+      const ownUser = await userModel.findById(userId).populate({
+        path: "personal_info",
+        select: "name profile_image",
+      });
+      const userInfo = {
+        userId: ownUser._id,
+        username: ownUser.personal_info.name,
+        profile_image: ownUser.personal_info.profile_image,
+        totalPoints: usersWithTotalPoints.find(
+          (user) => user.user._id.toString() === userId
+        ).totalPoints,
+        ownId: true,
+        rank: ownRanking,
+      };
+      // Push user's info after the top 10 list
+      topRankings.push(userInfo);
+    }
+
+    res.status(200).json({
+      success: true,
+      rankings: topRankings,
+      
+    });
+  } catch (error) {
+    return next(new ErrorHandler(500, "Internal Server Error"));
+  }
+});
+
+
+
+
+
+
+
+
+
+

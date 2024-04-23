@@ -166,4 +166,5 @@ router.get(
   authVerifyMiddleware.authMiddleware,
   userController.averagePointData
 );
+router.get("/users/rankings",authVerifyMiddleware.authMiddleware, userController.topRankings);
 module.exports = router
