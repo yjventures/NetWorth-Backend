@@ -49,12 +49,16 @@ exports.adminLogin = catchAsync(async (req, res, next) => {
     { expiresIn: process.env.JWT_EXPIRES_IN }
   );
 
+  user.password = undefined;
   return res.status(200).json({
     success: true,
-    message: 'Admin Login Successful',
-    accessToken: accessToken,
-    refreshToken: refreshToken,
-  })
+    message: "Admin Login Successful",
+    data: {
+      userData: user,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    },
+  });
 })
 
 exports.allUser = catchAsync(async (req, res, next) => {
