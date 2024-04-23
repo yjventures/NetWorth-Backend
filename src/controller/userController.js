@@ -582,17 +582,22 @@ exports.averagePointData = catchAsync(async (req, res, next) => {
     let totalPoints = 0;
 
     cards.forEach((card) => {
-      // console.log(card)
       totalPoints += card.total_points || 0;
     });
 
     const averagePoints = totalPoints / cards?.length;
     const averagePointsRounded = averagePoints.toFixed(2);
 
+    // Define the maximum possible score
+    const maxPossibleScore = 1500; 
+
+    // Calculate the percentage
+    const percentage = (averagePoints / maxPossibleScore) * 100;
+
     res.status(200).json({
       success: true,
       data: {
-        averagePoints: averagePointsRounded,
+        percentage: percentage.toFixed(2), 
         totalCards: cards?.length,
       },
     });
@@ -600,3 +605,4 @@ exports.averagePointData = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(500, "Internal Server Error"));
   }
 });
+
