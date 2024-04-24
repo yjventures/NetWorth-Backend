@@ -177,4 +177,10 @@ router.put(
   authVerifyMiddleware.adminMiddleware,
   adminController.updateAAdminPersonalInfo
 );
+
+router.get(
+  "/admin/signup-statistic",
+  authVerifyMiddleware.adminMiddleware,
+  adminController.signupStatistic
+);
 module.exports = router

@@ -774,3 +774,32 @@ exports.getAdminPersonalInfo = catchAsync(async (req, res, next) => {
     .status(200)
     .json({ success: true, data: user });
 });
+
+exports.signupStatistic = catchAsync(async (req, res, next) => {
+  const role = req.headers.role;
+  if (role !== "admin") {
+    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  }
+
+  const today = new Date();
+  //for 7 days
+  const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000); 
+
+  // Count users created today
+  const usersToday = await userModel.countDocuments({
+    createdAt: { $gte: new Date(today.setHours(0, 0, 0, 0)) }, 
+  });
+
+  // Count users created in the last week
+  const usersLastWeek = await userModel.countDocuments({
+    createdAt: { $gte: lastWeek, $lt: new Date(today.setHours(0, 0, 0, 0)) }, 
+  });
+
+  return res.status(200).json({
+    status: true,
+    data: {
+      today: usersToday,
+      lastWeek: usersLastWeek,
+    },
+  });
+});
