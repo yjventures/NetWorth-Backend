@@ -10,7 +10,7 @@ const generator = require("generate-password");
 const userBcrypt = require("../utils/userBcrypt");
 const notificationModel = require("../model/notificationModel");
 const { sendMultiplePushNotification } = require("../utils/fcmUtils");
-
+const mongoose = require("mongoose");
 exports.searchContact = catchAsync(async (req, res, next) => {
   try {
     const userId = req.headers.userId;
@@ -73,7 +73,6 @@ exports.searchContact = catchAsync(async (req, res, next) => {
   }
 });
 
-
 //send friend request
 exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
   const { sender_id, recipient_id } = req.body;
@@ -92,20 +91,37 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
   }
 
   // Check if the recipient is already in the sender's outgoing_friend_request
-  const existsInOutgoing = senderCard.outgoing_friend_request.some(
-    (card) => card.toString() === recipient_id.toString()
-  );
+  const existsInOutgoing =
+    senderCard.outgoing_friend_request.includes(recipient_id);
 
   if (!existsInOutgoing) {
-    // Check if sender or recipient is already connected
-    const senderIsConnected = senderCard.friend_list.some(
-      (friend) => friend.friend.toString() === recipient_id.toString()
-    );
-    const recipientIsConnected = recipientCard.friend_list.some(
-      (friend) => friend.friend.toString() === sender_id.toString()
-    );
 
-    if (senderIsConnected || recipientIsConnected) {
+    const recipientIsConnected = senderCard?.friend_list?.some((friend) => {
+      // console.log("Friend ID:", friend?._id?.toString());
+      // console.log("Recipient ID:", recipient_id);
+      return friend?._id?.toString() === recipient_id
+    });
+
+    // console.log("recipientIsConnected", recipientIsConnected);
+
+    // return;
+
+    if (recipientIsConnected) {
+      return next(
+        new ErrorHandler(403, "You are Already connected with this user")
+      );
+    }
+
+    const recipientIsInIncoming =
+      senderCard?.incoming_friend_request.includes(recipient_id);
+    if (recipientIsInIncoming) {
+      return next(
+        new ErrorHandler(403, "You received friend request from this user")
+      );
+    }
+    if (recipientIsConnected) {
+      // console.log(recipientIsInOutgoing);
+
       return next(
         new ErrorHandler(403, "You are already connected with this user.")
       );
