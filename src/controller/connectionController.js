@@ -223,7 +223,7 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
 
     // Add recipient_id to senderCard's friend_list with a timestamp
     senderCard.friend_list.push({
-      friend: recipient_id,
+      friend: senderCard,
       time_stamp: new Date(),
     });
 
@@ -235,7 +235,7 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
 
     // Add sender_id to recipientCard's friend_list with a timestamp
     recipientCard.friend_list.push({
-      friend: sender_id,
+      friend: senderCard,
       time_stamp: new Date(),
     });
   } else {

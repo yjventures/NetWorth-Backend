@@ -529,21 +529,18 @@ exports.showAllActivities = catchAsync(async (req, res, next) => {
 exports.showFriendListForCard = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
-  const card = await cardModel
-    .findById(id)
-    .populate({
-      path: "friend_list",
+  const card = await cardModel.findById(id).populate({
+    path: "friend_list",
+    model: "Card",
+    select: "friend",
+    populate: {
+      path: "friend",
+      model: "Card",
+      select: "name profile_image designation company_name",
+    },
+  });
 
-      populate: {
-        path: "friend",
-        model: "Card",
-        select:
-          "-design -links -incoming_friend_request -outgoing_friend_request -address -bio -card_name -color -company_logo  -cover_image -status -phone_number -email -activities -friend_list",
-      },
-    })
-    .select(
-      "-design -email -phone_number -links -activities -incoming_friend_request -outgoing_friend_request -address -bio -card_name -color -company_logo -company_name -cover_image -designation -name -profile_image -status"
-    );
+  // console.log(card)
 
   if (!card) {
     return res.status(404).json({
@@ -705,5 +702,3 @@ exports.cardAnalyticalData = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(500, "Internal Server Error"));
   }
 });
-
-
