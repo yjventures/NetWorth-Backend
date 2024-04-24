@@ -181,6 +181,6 @@ router.put(
 router.get(
   "/admin/signup-statistic",
   authVerifyMiddleware.adminMiddleware,
-  adminController.signupStatistic
+  adminController.targetSignupStatistic
 );
 module.exports = router

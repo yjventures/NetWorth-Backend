@@ -775,7 +775,7 @@ exports.getAdminPersonalInfo = catchAsync(async (req, res, next) => {
     .json({ success: true, data: user });
 });
 
-exports.signupStatistic = catchAsync(async (req, res, next) => {
+exports.targetSignupStatistic = catchAsync(async (req, res, next) => {
   const role = req.headers.role;
   if (role !== "admin") {
     return next(new ErrorHandler(401, "You Are Not Authorized"));
