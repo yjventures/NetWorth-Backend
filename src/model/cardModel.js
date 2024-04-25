@@ -33,7 +33,6 @@ const cardSchema = mongoose.Schema(
     email: [
       {
         type: String,
-        unique: true,
       },
     ],
     designation: {

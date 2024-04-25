@@ -12,7 +12,6 @@ const tempCardSchema = mongoose.Schema(
     email: [
       {
         type: String,
-        unique: true,
       },
     ],
     designation: {

@@ -18,50 +18,54 @@ exports.createTempCard = catchAsync(async (req, res, next) => {
     invited_card,
   } = req.body;
 
-  // Check if the card existance
+  // console.log(req.body)
+
+  // Check if the own card existance
   const inviteeCard = await cardModel.findById(invited_card);
+  // console.log(inviteeCard)
+  // return;
   if (!inviteeCard) {
     return next(new ErrorHandler(404, "Your Card Not Found"));
   }
   // Check if email exists in tempCardModel
-  const existingEmailsTempCard = await tempCardModel.find({
-    email: { $in: email },
+  const existingEmailsTempCard = await tempCardModel.findOne({
+    email: { $elemMatch: { $in: email } },
   });
-  if (existingEmailsTempCard.length > 0) {
-    const existingEmailsList = existingEmailsTempCard.map(
-      (existingEmail) => existingEmail.email
-    );
-    return next(
-      new ErrorHandler(400, `${existingEmailsList} already exist in Card`)
-    );
+
+  // console.log(existingEmailsTempCard);
+
+  if (existingEmailsTempCard) {
+    // const existingEmailsList = existingEmailsTempCard.map(
+    //   (existingEmail) => existingEmail.email
+    // );
+    return next(new ErrorHandler(400, `email already exist in Card`));
   }
 
   // Check if email exists in cardModel
-  const existingEmailsCard = await cardModel.find({ email: { $in: email } });
-  if (existingEmailsCard.length > 0) {
-    const existingEmailsList = existingEmailsCard.map(
-      (existingEmail) => existingEmail.email
-    );
-    return next(
-      new ErrorHandler(400, `${existingEmailsList} already exist in Card`)
-    );
+  const existingEmailsCard = await cardModel.findOne({
+    email: { $elemMatch: { $in: email } },
+  });
+
+  // console.log(existingEmailsCard);
+
+  if (existingEmailsCard) {
+    // const existingEmailsList = existingEmailsCard.map(
+    //   (existingEmail) => existingEmail.email
+    // );
+    // console.log(existingEmailsList);
+
+    return next(new ErrorHandler(400, `email already exist in Card`));
   }
 
   // If no email exists in either model, create a new TempCard
-  const newTempCard = await tempCardModel.create({
-    name,
-    company_name,
-    address,
-    email,
-    designation,
-    phone_number,
-    invited_card,
-  });
+  const newTempCard = await tempCardModel.create(req.body);
 
+  // console.log("newTempCard", newTempCard);
   inviteeCard.invite_in_platform.number += 1;
-  inviteeCard.friend_list.push(newTempCard?._id);
+  // inviteeCard.friend_list.push({ friend: newTempCard });
   await inviteeCard.save();
 
+  // console.log(inviteeCard)
   const encryptionKey = process.env.INVITATION_ENCRYPTION_KEY;
 
   const urlEmail = email[0];
