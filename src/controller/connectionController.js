@@ -579,11 +579,11 @@ exports.cardIniatializationFormInvitation = catchAsync(async (req, res, next) =>
   await invitedCard.save();
   await newCard.save();
 
-  console.log(invitedCard)
-  // const tempCard = await tempCardModel.findByIdAndDelete(temp_card_id);
-  // if (!tempCard) {
-  //   return next(new ErrorHandler(404, "Something Wrong with delete temp card"));
-  // }
+  // console.log(invitedCard)
+  const tempCard = await tempCardModel.findByIdAndDelete(temp_card_id);
+  if (!tempCard) {
+    return next(new ErrorHandler(404, "Something Wrong with delete temp card"));
+  }
 
   return res.status(200).json({
     status: true, 
