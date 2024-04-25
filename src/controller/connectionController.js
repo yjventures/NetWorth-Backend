@@ -587,7 +587,7 @@ exports.cardIniatializationFormInvitation = catchAsync(async (req, res, next) =>
 
   return res.status(200).json({
     status: true, 
-    data: newCard
+    data: newCard?._id
   })
 
 })
