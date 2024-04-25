@@ -513,3 +513,28 @@ exports.markNotificationsAsRead = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(500, error));
   }
 });
+
+
+exports.checkCardInFriendListOrNot = catchAsync(async (req, res, next) => {
+  const { own_id, other_id } = req.query;
+
+  console.log(own_id, other_id);
+  const senderCard = await cardModel.findById(own_id);
+  if (!senderCard) { 
+    return next(new ErrorHandler(404, "Something Wrong with Your Card"));
+  }
+
+  // console.log(senderCard);
+  const recipientIsConnected = senderCard?.friend_list?.some((friend) => {
+    // console.log("friend ", friend)
+    // console.log("Friend ID:", friend?.friend?._id?.toString());
+    // console.log("Recipient ID:", other_id);
+    return friend?.friend?._id?.toString() === other_id;
+  });
+
+  // console.log(recipientIsConnected);
+  return res.status(200).json({
+    status: true,
+    data: recipientIsConnected,
+  });
+})

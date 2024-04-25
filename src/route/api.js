@@ -183,4 +183,9 @@ router.get(
   authVerifyMiddleware.adminMiddleware,
   adminController.targetSignupStatistic
 );
+
+router.get(
+  "/card/check-friend",
+  connectionController.checkCardInFriendListOrNot
+);
 module.exports = router
