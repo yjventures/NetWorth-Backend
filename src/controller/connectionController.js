@@ -11,11 +11,13 @@ const userBcrypt = require("../utils/userBcrypt");
 const notificationModel = require("../model/notificationModel");
 const { sendMultiplePushNotification } = require("../utils/fcmUtils");
 const mongoose = require("mongoose");
+const tempCardModel = require("../model/tempCardModel");
 exports.searchContact = catchAsync(async (req, res, next) => {
   try {
     const userId = req.headers.userId;
 
     const { search, country, city, designation } = req.query;
+    console.log(search, country, city)
     let query = {};
 
     if (search) {
@@ -53,6 +55,7 @@ exports.searchContact = catchAsync(async (req, res, next) => {
         $regex: countryRegex.source,
         $options: "i",
       };
+      console.log(query)
     }
 
     // Exclude user's own cards
@@ -538,3 +541,80 @@ exports.checkCardInFriendListOrNot = catchAsync(async (req, res, next) => {
     data: recipientIsConnected,
   });
 })
+
+
+exports.cardIniatializationFormInvitation = catchAsync(async (req, res, next) => {
+  const { invited_id, temp_card_id } = req.body;
+
+  // console.log(invited_id, temp_card_id)
+
+  const invitedCard = await cardModel.findById(invited_id);
+  if (!invitedCard) {
+    return next(new ErrorHandler(404, "Something Wrong with your Card"));
+  }
+
+  // console.log(invitedCard)
+  // return;
+  const newCard = await cardModel.create({})
+
+  console.log(newCard)
+  // return;
+  if (!newCard) {
+    return next(new ErrorHandler(404, "Something Wrong with card creation"));
+  }
+  // invitedCard.friend_list.push(newCard);
+  invitedCard?.friend_list?.push({
+    friend: newCard?._id,
+    // from: "incoming",
+    time_stamp: new Date(),
+  });
+
+
+
+  newCard?.friend_list?.push({
+    friend: invitedCard?._id,
+    // from: "incoming",
+    time_stamp: new Date(),
+  });
+  await invitedCard.save();
+  await newCard.save();
+
+  console.log(invitedCard)
+  // const tempCard = await tempCardModel.findByIdAndDelete(temp_card_id);
+  // if (!tempCard) {
+  //   return next(new ErrorHandler(404, "Something Wrong with delete temp card"));
+  // }
+
+  return res.status(200).json({
+    status: true, 
+    data: newCard
+  })
+
+})
+
+exports.unfriendMutualFriend = catchAsync(async (req, res, next) => {
+  const { own_id, remove_friend_id } = req.body;
+
+  const ownCard = await cardModel.findById(own_id);
+  if (!ownCard) {
+    return next(new ErrorHandler(404, "Something Wrong with your Card"));
+  }
+
+  // Find the index of the friend to remove
+  const friendIndex = ownCard.friend_list.findIndex(
+    (friend) => friend.friend === remove_friend_id
+  );
+
+  // If friend is found, remove from the friend_list array
+  if (friendIndex !== -1) {
+    ownCard.friend_list.splice(friendIndex, 1);
+    await ownCard.save();
+    res.status(200).json({
+      status: "success",
+      message: "Friend removed successfully",
+    });
+  } else {
+    // If friend is not found in the friend_list
+    return next(new ErrorHandler(404, "Friend not found in your friend list"));
+  }
+});

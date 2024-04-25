@@ -188,4 +188,8 @@ router.get(
   "/card/check-friend",
   connectionController.checkCardInFriendListOrNot
 );
+
+router.put("/card/invitation-card-initialization", connectionController.cardIniatializationFormInvitation)
+
+router.put("/card/unfriend", connectionController.unfriendMutualFriend);
 module.exports = router
