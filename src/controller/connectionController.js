@@ -600,21 +600,17 @@ exports.unfriendMutualFriend = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(404, "Something Wrong with your Card"));
   }
 
-  // Find the index of the friend to remove
-  const friendIndex = ownCard.friend_list.findIndex(
-    (friend) => friend.friend === remove_friend_id
-  );
+  // Use $pull operator to remove the specified friend
+  await cardModel.findByIdAndUpdate(own_id, {
+    $pull: { friend_list: { friend: remove_friend_id } },
+  });
 
-  // If friend is found, remove from the friend_list array
-  if (friendIndex !== -1) {
-    ownCard.friend_list.splice(friendIndex, 1);
-    await ownCard.save();
-    res.status(200).json({
-      status: "success",
-      message: "Friend removed successfully",
-    });
-  } else {
-    // If friend is not found in the friend_list
-    return next(new ErrorHandler(404, "Friend not found in your friend list"));
-  }
+  await cardModel.findByIdAndUpdate(remove_friend_id, {
+    $pull: { friend_list: { friend: own_id } },
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Friend removed successfully",
+  });
 });
