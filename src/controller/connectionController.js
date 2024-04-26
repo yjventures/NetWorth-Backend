@@ -521,7 +521,7 @@ exports.markNotificationsAsRead = catchAsync(async (req, res, next) => {
 exports.checkCardInFriendListOrNot = catchAsync(async (req, res, next) => {
   const { own_id, other_id } = req.query;
 
-  console.log(own_id, other_id);
+  // console.log(own_id, other_id);
   const senderCard = await cardModel.findById(own_id);
   if (!senderCard) { 
     return next(new ErrorHandler(404, "Something Wrong with Your Card"));
@@ -557,33 +557,39 @@ exports.cardIniatializationFormInvitation = catchAsync(async (req, res, next) =>
   // return;
   const newCard = await cardModel.create({})
 
-  console.log(newCard)
+  // console.log(newCard)
   // return;
   if (!newCard) {
     return next(new ErrorHandler(404, "Something Wrong with card creation"));
   }
   // invitedCard.friend_list.push(newCard);
   invitedCard?.friend_list?.push({
-    friend: newCard?._id,
-    // from: "incoming",
+    friend: newCard,
+    from: "",
     time_stamp: new Date(),
   });
 
 
 
   newCard?.friend_list?.push({
-    friend: invitedCard?._id,
-    // from: "incoming",
+    friend: invitedCard,
+    from: "",
     time_stamp: new Date(),
   });
   await invitedCard.save();
   await newCard.save();
 
+  // console.log("invitedCard", invitedCard)
+  // console.log("new Card", newCard)
+
   // console.log(invitedCard)
   const tempCard = await tempCardModel.findByIdAndDelete(temp_card_id);
+
   if (!tempCard) {
     return next(new ErrorHandler(404, "Something Wrong with delete temp card"));
   }
+  // console.log("delete temp card ", tempCard);
+
 
   return res.status(200).json({
     status: true, 
