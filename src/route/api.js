@@ -196,4 +196,5 @@ router.put(
 );
 
 router.put("/card/unfriend", connectionController.unfriendMutualFriend);
+router.put("/card/temp-card-unfriend", connectionController.unfriendTempCardMutualFriend);
 module.exports = router

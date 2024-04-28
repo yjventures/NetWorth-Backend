@@ -569,3 +569,36 @@ exports.unfriendMutualFriend = catchAsync(async (req, res, next) => {
     message: 'Friend removed successfully',
   })
 })
+
+
+exports.unfriendTempCardMutualFriend = catchAsync(async (req, res, next) => {
+  const { own_id, remove_friend_id } = req.body
+
+  const ownCard = await cardModel.findById(own_id)
+  if (!ownCard) {
+    return next(new ErrorHandler(404, 'Your Card not found'))
+  } 
+
+  // Use $pull operator to remove the specified friend
+  const tempCardDelete = await tempCardModel.findByIdAndDelete(remove_friend_id)
+
+  if (!tempCardDelete) {
+    return next(new ErrorHandler(404, 'Temporary Card not found or already deleted!'))
+  }
+
+  console.log(tempCardDelete)
+  const email = tempCardDelete.email[0];
+  // console.log(email)
+  // return;
+
+  const emailMessage = `I am sorry to delete your invitation`;
+
+  const emailSubject = "NetWorth";
+  const emailSend = await SendEmailUtils(email, emailMessage, emailSubject);
+
+
+  res.status(200).json({
+    success: true,
+    message: 'Temporary Friend removed successfully',
+  })
+})
