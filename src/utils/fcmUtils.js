@@ -6,6 +6,7 @@ require('dotenv').config()
 initializeApp({
   credential: applicationDefault(),
   projectId: 'networthhub',
+  
 })
 
 const sendMultiplePushNotification = async (user_id, message) => {
