@@ -536,7 +536,7 @@ exports.showFriendListForCard = catchAsync(async (req, res, next) => {
     populate: {
       path: "friend",
       model: "Card",
-      select: "name profile_image designation company_name",
+      select: "name profile_image designation company_name calendly_link",
     },
   });
 
