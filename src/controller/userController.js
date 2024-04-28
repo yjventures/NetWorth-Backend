@@ -609,8 +609,8 @@ exports.averagePointData = catchAsync(async (req, res, next) => {
 exports.topRankings = catchAsync(async (req, res, next) => {
   const userId = req.headers.userId;
   try {
-    // Fetch all users and populate the personal_info field
-    const users = await userModel.find().populate({
+    // Fetch users with role 'user' and populate the personal_info field
+    const users = await userModel.find({ role: "user" }).populate({
       path: "personal_info",
       select: "name profile_image",
     });
@@ -636,7 +636,7 @@ exports.topRankings = catchAsync(async (req, res, next) => {
     usersWithTotalPoints.forEach((userWithTotalPoints, index) => {
       if (userWithTotalPoints.user._id.toString() === userId) {
         ownRanking = index + 1;
-        ownId = true; 
+        ownId = true;
       }
     });
 
@@ -645,10 +645,10 @@ exports.topRankings = catchAsync(async (req, res, next) => {
       .slice(0, 10)
       .map(({ user, totalPoints }, index) => ({
         userId: user._id,
-        username: user.personal_info.name, 
-        profile_image: user.personal_info.profile_image, 
+        username: user.personal_info.name,
+        profile_image: user.personal_info.profile_image,
         totalPoints,
-        ownId: user._id.toString() === userId, 
+        ownId: user._id.toString() === userId,
         rank: index + 1,
       }));
 
@@ -676,12 +676,12 @@ exports.topRankings = catchAsync(async (req, res, next) => {
     res.status(200).json({
       success: true,
       rankings: topRankings,
-      
     });
   } catch (error) {
     return next(new ErrorHandler(500, "Internal Server Error"));
   }
 });
+
 
 
 
