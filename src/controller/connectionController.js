@@ -544,6 +544,13 @@ exports.checkCardInFriendListOrNot = catchAsync(async (req, res, next) => {
 
 
 exports.cardIniatializationFormInvitation = catchAsync(async (req, res, next) => {
+  const userId = req.headers.userId;
+
+  const user = await userModel.findById(userId);
+  if (!user) {
+    return next(new ErrorHandler(404, "user id not found"));
+  }
+
   const { invited_id, temp_card_id } = req.body;
 
   // console.log(invited_id, temp_card_id)
@@ -576,8 +583,12 @@ exports.cardIniatializationFormInvitation = catchAsync(async (req, res, next) =>
     from: "",
     time_stamp: new Date(),
   });
+
+  user?.cards.push(newCard);
+  
   await invitedCard.save();
   await newCard.save();
+  await user.save();
 
   // console.log("invitedCard", invitedCard)
   // console.log("new Card", newCard)
