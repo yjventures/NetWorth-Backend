@@ -122,10 +122,37 @@ exports.verifyRegistrationOTP = catchAsync(async (req, res, next) => {
   user.is_verified = true;
   user.save();
 
-  return res.status(200).json({
+  const accessToken = jwt.sign(
+    {
+      userId: user?._id,
+      role: user?.role,
+      email: user?.email,
+    },
+    process.env.SECRET_KEY,
+    { expiresIn: process.env.JWT_EXPIRES_IN }
+  );
+
+  const refreshToken = jwt.sign(
+    { userId: user?._id },
+    process.env.JWT_REFRESH_SECRET,
+    {
+      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+    }
+  );
+
+  user.password = undefined;
+  res.status(200).json({
     status: true,
-    message: "OTP Verified Successfully",
+    message: "login successful",
+    data: user,
+    accessToken: accessToken,
+    refreshToken: refreshToken,
   });
+
+  // return res.status(200).json({
+  //   status: true,
+  //   message: "OTP Verified Successfully",
+  // });
 });
 
 //for image to text
