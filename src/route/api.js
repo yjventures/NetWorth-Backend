@@ -69,7 +69,7 @@ router.get('/admin/users/:userId', authVerifyMiddleware.adminMiddleware, adminCo
 
 router.delete('/admin/users/:userId', authVerifyMiddleware.adminMiddleware, adminController.deleteUser)
 
-router.get('/search', authVerifyMiddleware.authMiddleware, connectionController.searchContact)
+router.get('/search/:cardId', authVerifyMiddleware.authMiddleware, connectionController.searchContact)
 // router.post("/invite-via-email", connectionController.sendInviteViaEmail);
 // router.post(
 // "/user/check-temp-password",

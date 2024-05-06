@@ -12,12 +12,12 @@ const notificationModel = require("../model/notificationModel");
 const { sendMultiplePushNotification } = require("../utils/fcmUtils");
 const mongoose = require("mongoose");
 const tempCardModel = require("../model/tempCardModel");
+
 exports.searchContact = catchAsync(async (req, res, next) => {
   try {
     const userId = req.headers.userId;
-
+    const cardId = req.params.cardId;
     const { search, country, city, designation } = req.query;
-    console.log(search, country, city);
     let query = {};
 
     if (!search && !country && !city && !designation) {
@@ -70,13 +70,34 @@ exports.searchContact = catchAsync(async (req, res, next) => {
     const userCardIds = user.cards.map((card) => card.toString());
     query._id = { $nin: userCardIds };
 
+    // Check if cardId exists and fetch the senderCard
+    const senderCard = cardId ? await cardModel.findById(cardId) : null;
+
     // Execute the query
     const searchResult = await cardModel.find(query);
-    // const total = searchResult.length;
+
+    // Iterate through search results to add button information
+    const searchResultWithButtons = searchResult.map((result) => {
+      let button = "";
+      if (senderCard) {
+        if (senderCard.outgoing_friend_request.includes(result._id)) {
+          button = "outgoing";
+        } else if (senderCard.incoming_friend_request.includes(result._id)) {
+          button = "incoming";
+        } else if (
+          senderCard.friend_list.some(
+            (friend) => friend.friend._id.toString() === result._id.toString()
+          )
+        ) {
+          button = "friend";
+        }
+      }
+      return { ...result.toObject(), button };
+    });
 
     res.status(200).json({
       status: true,
-      data: searchResult,
+      data: searchResultWithButtons,
     });
   } catch (error) {
     next(error);
