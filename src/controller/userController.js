@@ -16,7 +16,8 @@ const verifyRefreshToken = require("../utils/verifyRefreshToken");
 const cardModel = require("../model/cardModel");
 
 const regex =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%*?&/]?)[A-Za-z\d@.#$!%*?&/]{8,15}$/;
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%*?&])[A-Za-z\d@.#$!%*?&]{8,15}$/;
+
 
 exports.userRegistration = catchAsync(async (req, res, next) => {
   const { name, email, password } = req.body;
