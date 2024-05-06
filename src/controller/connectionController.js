@@ -20,6 +20,13 @@ exports.searchContact = catchAsync(async (req, res, next) => {
     console.log(search, country, city);
     let query = {};
 
+    if (!search && !country && !city && !designation) {
+      return res.status(200).json({
+        status: true,
+        data: [],
+      });
+    }
+
     if (search) {
       if (search.includes("@")) {
         query.email = { $regex: `^${search}`, $options: "i" };
@@ -112,7 +119,7 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
 
   if (recipientIsConnected) {
     return next(
-      new ErrorHandler(403, "You are Already connected with this connection")
+      new ErrorHandler(403, "You are Already connected with this connectiion")
     );
   }
 
