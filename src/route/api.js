@@ -206,7 +206,7 @@ router.post(
 
 router.put(
   "/connection-via-qr",
-  // authVerifyMiddleware.authMiddleware,
+  authVerifyMiddleware.authMiddleware,
   connectionController.friendViaQrCode
 );
 module.exports = router
