@@ -702,3 +702,5 @@ exports.cardAnalyticalData = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(500, "Internal Server Error"));
   }
 });
+
+

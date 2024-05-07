@@ -136,7 +136,7 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
     return friend?.friend?._id?.toString() === recipient_id;
   });
 
-  console.log("recipientIsConnected", recipientIsConnected);
+  // console.log("recipientIsConnected", recipientIsConnected);
 
   if (recipientIsConnected) {
     return next(
@@ -691,3 +691,97 @@ exports.sendInvitationViaEmail = catchAsync(async (req, res, next) => {
   });
 
 })
+
+exports.friendViaQrCode = catchAsync(async (req, res, next) => {
+  const { sender_id, receiver_id } = req.body;
+
+  const sender = await cardModel.findById(sender_id);
+  const receiver = await cardModel.findById(receiver_id);
+  if (!sender) {
+    return next(new ErrorHandler(404, "Sender Card not found"));
+  }
+
+  if (!receiver) {
+    return next(new ErrorHandler(404, "Receiver Card not found"));
+  }
+
+  const receiverIsConnected = sender?.friend_list?.some((friend) => {
+    return friend?.friend?._id?.toString() === receiver_id;
+  });
+
+  if (receiverIsConnected) {
+    return res.status(200).json({
+      status: true,
+      message: "You are already connected with this card",
+    });
+  }
+
+  const incomingRequestExists = await sender.incoming_friend_request.includes(
+    receiver_id
+  );
+
+  const outgoingRequest = await sender.outgoing_friend_request.includes(
+    receiver_id
+  );
+
+  if (incomingRequestExists) {
+    sender.incoming_friend_request = sender.incoming_friend_request.filter(
+      (id) => id.toString() !== receiver_id
+    );
+    receiver.outgoing_friend_request = receiver.outgoing_friend_request.filter(
+      (id) => id.toString() !== sender_id
+    );
+    sender.friend_list.push({
+      friend: receiver,
+      from: "",
+      time_stamp: new Date(),
+    });
+    receiver.friend_list.push({
+      friend: sender,
+      from: "",
+      time_stamp: new Date(),
+    });
+  }else if (outgoingRequest) {
+    sender.outgoing_friend_request = sender.outgoing_friend_request.filter(
+      (id) => id.toString() !== receiver_id
+    );
+    receiver.incoming_friend_request = receiver.incoming_friend_request.filter(
+      (id) => id.toString() !== sender_id
+    );
+    // Add receiver to sender's friend list
+    sender.friend_list.push({
+      friend: receiver,
+      from: "",
+      time_stamp: new Date(),
+    });
+
+    // Add sender to receiver's friend list
+    receiver.friend_list.push({
+      friend: sender,
+      from: "",
+      time_stamp: new Date(),
+    });
+  } else {
+    sender.friend_list.push({
+      friend: receiver,
+      from: "",
+      time_stamp: new Date(),
+    });
+
+    // Add sender to receiver's friend list
+    receiver.friend_list.push({
+      friend: sender,
+      from: "",
+      time_stamp: new Date(),
+    });
+  }
+
+  // Save changes to sender and receiver documents
+  await sender.save();
+  await receiver.save();
+
+  return res.status(200).json({
+    status: true,
+    message: "Friendship established successfully",
+  });
+});

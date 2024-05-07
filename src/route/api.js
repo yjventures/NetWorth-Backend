@@ -203,4 +203,10 @@ router.post(
   authVerifyMiddleware.authMiddleware,
   connectionController.sendInvitationViaEmail
 );
+
+router.put(
+  "/connection-via-qr",
+  // authVerifyMiddleware.authMiddleware,
+  connectionController.friendViaQrCode
+);
 module.exports = router
