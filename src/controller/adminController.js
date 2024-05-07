@@ -11,6 +11,8 @@ const tempPasswordModel = require('../model/tempPasswordModel')
 const { generateLinkForTeamMember } = require('../utils/encryptAndDecryptUtils')
 const { encryptData, decryptData } = require('../utils/encryptAndDecryptUtils')
 const aiModel = require('../model/AITokenModel')
+const linkModel = require("../model/linkModel")
+const activityModel = require("../model/ActivityModel")
 const moment = require('moment')
 const tempCardModel = require('../model/tempCardModel')
 
@@ -148,32 +150,76 @@ exports.getUserDetails = catchAsync(async (req, res, next) => {
 })
 
 exports.deleteUser = catchAsync(async (req, res, next) => {
-  //  console.log("clicked")
-  const userId = req.params.userId
-  const role = req.headers.role
+  const userId = req.params.userId;
+  const role = req.headers.role;
 
-  if (role !== 'admin') {
-    return next(new ErrorHandler(401, 'You Are Not Authorized'))
+  if (role !== "admin") {
+    return next(new ErrorHandler(401, "You Are Not Authorized"));
   }
 
-  const user = await userModel.findByIdAndDelete(userId)
+  const user = await userModel.findById(userId);
 
-  //   console.log(user)
   if (!user) {
-    return next(new ErrorHandler(404, 'This User Not Found'))
+    return next(new ErrorHandler(404, "This User Not Found"));
   }
 
-  // console.log(user.email)
-  const emailMessage = `Sorry, Your account has been Deleted from NetWorth Hub`
-  const emailSubject = 'NetWorth'
-  const emailSend = await SendEmailUtils(user.email, emailMessage, emailSubject)
+  // Get the personal_info id from the user document
+  const personalInfoId = user.personal_info;
+
+  // Delete the personal information from the personalInfoModel
+  await personalInfoModel.findByIdAndDelete(personalInfoId);
+
+  // Get all the cards associated with the user
+  const userCards = user.cards;
+
+  // Loop through each card
+  for (const cardId of userCards) {
+    const card = await cardModel.findById(cardId);
+
+    if (!card) {
+      // If card not found, continue to next card
+      continue;
+    }
+
+    // Delete all links associated with the card
+    const linksToDelete = card.links;
+    await Promise.all(
+      linksToDelete.map(async (linkId) => {
+        await linkModel.findByIdAndDelete(linkId);
+      })
+    );
+
+    // Delete all activities associated with the card
+    const activitiesToDelete = card.activities;
+    await Promise.all(
+      activitiesToDelete.map(async (activityId) => {
+        await activityModel.findByIdAndDelete(activityId);
+      })
+    );
+
+    // Delete the card
+    await cardModel.findByIdAndDelete(cardId);
+  }
+
+  // Delete the user
+  await userModel.findByIdAndDelete(userId);
+
+  // Send email to the user
+  const emailMessage = `Sorry, Your account has been Deleted from NetWorth Hub`;
+  const emailSubject = "NetWorth";
+  const emailSend = await SendEmailUtils(
+    user.email,
+    emailMessage,
+    emailSubject
+  );
 
   return res.status(200).json({
     status: true,
-    message: 'Successfully Deleted The User',
+    message: "Successfully Deleted The User",
     data: user,
-  })
-})
+  });
+});
+
 
 // //get all friends list by card id
 exports.getAllFriendsListByCardId = catchAsync(async (req, res, next) => {
