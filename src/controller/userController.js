@@ -169,7 +169,7 @@ exports.login = catchAsync(async (req, res, next) => {
   console.log(user)
 
   if (!user) {
-    return next(new ErrorHandler(400, "User Not Exists"));
+    return next(new ErrorHandler(400, "Username or password are not correct"));
   }
 
   const match = await userBcrypt.comparePassword(password, user.password);
