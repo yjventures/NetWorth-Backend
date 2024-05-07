@@ -197,4 +197,10 @@ router.put(
 
 router.put("/card/unfriend", connectionController.unfriendMutualFriend);
 router.put("/card/temp-card-unfriend", connectionController.unfriendTempCardMutualFriend);
+
+router.post(
+  "/invitation/via-email",
+  authVerifyMiddleware.authMiddleware,
+  connectionController.sendInvitationViaEmail
+);
 module.exports = router

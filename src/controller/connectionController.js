@@ -677,3 +677,17 @@ exports.unfriendTempCardMutualFriend = catchAsync(async (req, res, next) => {
     message: "Temporary Friend removed successfully",
   });
 });
+
+exports.sendInvitationViaEmail = catchAsync(async (req, res, next) => {
+  const { email, link } = req.body;
+
+  const emailMessage = `You have been invited to join NetWorth. Please click on the following link to accept the invitation: ${link}`;
+  const emailSubject = "NetWorth";
+  const emailSend = await SendEmailUtils(email, emailMessage, emailSubject);
+
+  res.status(200).json({
+    success: true,
+    message: "Invitation sent successfully via email",
+  });
+
+})
