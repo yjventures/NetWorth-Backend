@@ -26,6 +26,7 @@ exports.userRegistration = catchAsync(async (req, res, next) => {
   if (!name || !email || !password) {
     return next(new ErrorHandler(400, "All Fields Are Required"));
   }
+  // console.log(password)
   //password regex check
   if (!regex.test(password)) {
     return next(
@@ -45,6 +46,7 @@ exports.userRegistration = catchAsync(async (req, res, next) => {
 
   //hashed the password
   const hashedPassword = await userBcrypt.hashPassword(password);
+ 
 
   //create personal info
   const personalInfo = await personalInfoModel.create({
@@ -62,6 +64,7 @@ exports.userRegistration = catchAsync(async (req, res, next) => {
     personal_info: personalInfoId,
   });
 
+  
   //4 digit otp generate
   const OTPCode = otpGenerator.generate(4, {
     digits: true,
@@ -85,12 +88,12 @@ exports.userRegistration = catchAsync(async (req, res, next) => {
     const emailSubject = "NetWorth";
     const emailSend = await SendEmailUtils(email, emailMessage, emailSubject);
 
-    newUser.password = undefined;
+    // newUser.password = undefined;
 
     return res.status(201).json({
       status: true,
       message: "Check Your Mail For Verification OTP",
-      data: newUser,
+      // data: newUser,
     });
   } else {
     return next(new ErrorHandler(400, "User not Found"));
@@ -99,7 +102,7 @@ exports.userRegistration = catchAsync(async (req, res, next) => {
 
 exports.verifyRegistrationOTP = catchAsync(async (req, res, next) => {
   const { email, otp } = req.body;
-  const user = await userModel.findOne({ email });
+  const user = await userModel.findOne({ email }).select("+password");
 
   if (!user) {
     return next(new ErrorHandler(404, "User not found"));
@@ -120,9 +123,13 @@ exports.verifyRegistrationOTP = catchAsync(async (req, res, next) => {
   // Update OTP status to indicate verification
   await OTPModel.updateOne({ email, otp, status: OTPStatus }, { status: 1 });
 
+  // Set user as verified
   user.is_verified = true;
-  user.save();
 
+  // Save the changes to the user document
+  await user.save();
+
+  // Generate tokens
   const accessToken = jwt.sign(
     {
       userId: user?._id,
@@ -142,70 +149,24 @@ exports.verifyRegistrationOTP = catchAsync(async (req, res, next) => {
   );
 
   user.password = undefined;
+  // Send response
   res.status(200).json({
     status: true,
-    message: "login successful",
+    message: "Login successful",
     data: user,
     accessToken: accessToken,
     refreshToken: refreshToken,
   });
-
-  // return res.status(200).json({
-  //   status: true,
-  //   message: "OTP Verified Successfully",
-  // });
 });
 
-//for image to text
-exports.analyzeDocument = catchAsync(async (req, res, next) => {
-  const { imageUrl } = req.body;
-  const key = process.env.AZURE_KEY;
-  const endpoint = process.env.ENDPOINT;
-
-  // Create Azure Form Recognizer client
-  const client = new DocumentAnalysisClient(
-    endpoint,
-    new AzureKeyCredential(key)
-  );
-
-  // Begin document analysis
-  const poller = await client.beginAnalyzeDocument(
-    "prebuilt-document",
-    imageUrl
-  );
-  const { pages } = await poller.pollUntilDone();
-
-  if (
-    !pages ||
-    pages.length === 0 ||
-    !pages[0].lines ||
-    pages[0].lines.length === 0
-  ) {
-    return next(
-      new ErrorHandler(400, "No lines were extracted from the document.")
-    );
-  }
-
-  // Extract lines from the analyzed document
-  const lines = pages[0].lines.map((line) => line.content);
-
-  //   console.log("Extracted lines:", lines);
-
-  // Respond with the extracted lines and the original image URL
-  return res.status(200).json({
-    status: true,
-    data: {
-      form_text: lines,
-      image: imageUrl,
-    },
-  });
-});
 
 //user login
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password, fcmToken } = req.body;
 
-  const user = await userModel.findOne({ email }).select("+password");
+  const user = await userModel.findOne({ email: email, role: "user" }).select("+password");
+  
+  console.log(user)
 
   if (!user) {
     return next(new ErrorHandler(400, "User Not Exists"));
@@ -281,6 +242,52 @@ exports.login = catchAsync(async (req, res, next) => {
     refreshToken: refreshToken,
   });
 });
+//for image to text
+exports.analyzeDocument = catchAsync(async (req, res, next) => {
+  const { imageUrl } = req.body;
+  const key = process.env.AZURE_KEY;
+  const endpoint = process.env.ENDPOINT;
+
+  // Create Azure Form Recognizer client
+  const client = new DocumentAnalysisClient(
+    endpoint,
+    new AzureKeyCredential(key)
+  );
+
+  // Begin document analysis
+  const poller = await client.beginAnalyzeDocument(
+    "prebuilt-document",
+    imageUrl
+  );
+  const { pages } = await poller.pollUntilDone();
+
+  if (
+    !pages ||
+    pages.length === 0 ||
+    !pages[0].lines ||
+    pages[0].lines.length === 0
+  ) {
+    return next(
+      new ErrorHandler(400, "No lines were extracted from the document.")
+    );
+  }
+
+  // Extract lines from the analyzed document
+  const lines = pages[0].lines.map((line) => line.content);
+
+  //   console.log("Extracted lines:", lines);
+
+  // Respond with the extracted lines and the original image URL
+  return res.status(200).json({
+    status: true,
+    data: {
+      form_text: lines,
+      image: imageUrl,
+    },
+  });
+});
+
+
 
 //verify login
 exports.verifyLoginOTP = catchAsync(async (req, res, next) => {
