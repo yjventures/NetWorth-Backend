@@ -110,37 +110,72 @@ exports.deleteCardById = catchAsync(async (req, res, next) => {
   const cardId = req.params.id;
   const userId = req.headers.userId;
 
-  try {
-    const user = await userModel.findById(userId);
-    if (!user) {
-      return next(new ErrorHandler(404, "User not found"));
-    }
-
-    if (user.cards.length === 1) {
-      return next(
-        new ErrorHandler(
-          400,
-          "You only have one card. Pleaes add another card before deleting this one"
-        )
-      );
-    }
-
-    const card = await cardModel.findByIdAndDelete(cardId);
-    if (!card) {
-      return next(new ErrorHandler(404, "Card not found"));
-    }
-
-    // Remove cardId from user's cards array
-    user.cards.pull(cardId);
-    await user.save();
-
-    return res.status(200).json({
-      status: true,
-      message: "Card deleted successfully",
-    });
-  } catch (error) {
-    return next(new ErrorHandler(500, "Internal Server Error"));
+  const user = await userModel.findById(userId);
+  if (!user) {
+    return next(new ErrorHandler(404, "User not found"));
   }
+
+  if (user.cards.length === 1) {
+    return next(
+      new ErrorHandler(
+        400,
+        "You only have one card. Please add another card before deleting this one"
+      )
+    );
+  }
+
+  const card = await cardModel.findByIdAndDelete(cardId);
+  if (!card) {
+    return next(new ErrorHandler(404, "Card not found"));
+  }
+
+  // Remove cardId from user's cards array
+  user.cards.pull(cardId);
+  await user.save();
+
+  // Remove references to this card from other cards' friend_list, incoming_friend_request, and outgoing_friend_request arrays
+  const cardsToUpdate = await cardModel.find({
+    $or: [
+      { "friend_list.friend": cardId },
+      { incoming_friend_request: cardId },
+      { outgoing_friend_request: cardId },
+    ],
+  });
+
+  await Promise.all(
+    cardsToUpdate.map(async (cardToUpdate) => {
+      if (
+        cardToUpdate.friend_list.some(
+          (friend) => friend.friend?.toString() === cardId
+        )
+      ) {
+        await cardModel.findByIdAndUpdate(cardToUpdate._id, {
+          $pull: { friend_list: { friend: cardId } },
+        });
+      }
+
+      if (cardToUpdate.incoming_friend_request.includes(cardId)) {
+        cardToUpdate.incoming_friend_request =
+          cardToUpdate.incoming_friend_request.filter(
+            (requestId) => requestId.toString() !== cardId
+          );
+      }
+
+      if (cardToUpdate.outgoing_friend_request.includes(cardId)) {
+        cardToUpdate.outgoing_friend_request =
+          cardToUpdate.outgoing_friend_request.filter(
+            (requestId) => requestId.toString() !== cardId
+          );
+      }
+
+      await cardToUpdate.save();
+    })
+  );
+
+  return res.status(200).json({
+    status: true,
+    message: "Card deleted successfully",
+  });
 });
 
 //create activity
@@ -711,5 +746,3 @@ exports.cardAnalyticalData = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(500, "Internal Server Error"));
   }
 });
-
-
