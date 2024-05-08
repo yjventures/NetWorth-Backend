@@ -15,6 +15,7 @@ const linkModel = require("../model/linkModel")
 const activityModel = require("../model/ActivityModel")
 const moment = require('moment')
 const tempCardModel = require('../model/tempCardModel')
+const notificationModel = require("../model/notificationModel")
 
 exports.adminLogin = catchAsync(async (req, res, next) => {
   const { email, password } = req.body
@@ -87,14 +88,17 @@ exports.allUser = catchAsync(async (req, res, next) => {
       ]
     }
 
-    const totalUsers = await userModel.countDocuments(filterQuery)
+    const totalUsers = await userModel.countDocuments({
+      role: "user",
+      ...filterQuery,
+    });
 
     const users = await userModel
-      .find(filterQuery)
+      .find({ role: "user", ...filterQuery })
       .sort(sortQuery)
       .skip(skip)
       .limit(limit)
-      .populate({ path: 'personal_info', select: 'name profile_image' })
+      .populate({ path: "personal_info", select: "name profile_image" });
 
     if (users.length === 0) {
       return res.status(200).json({
@@ -181,6 +185,14 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
       continue;
     }
 
+    // Delete all notifications associated with the card
+    const notificationsToDelete = card.notifications;
+    await Promise.all(
+      notificationsToDelete.map(async (notificationId) => {
+        await notificationModel.findByIdAndDelete(notificationId);
+      })
+    );
+
     // Delete all links associated with the card
     const linksToDelete = card.links;
     await Promise.all(
@@ -221,7 +233,7 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
 });
 
 
-// //get all friends list by card id
+ //get all friends list by card id
 exports.getAllFriendsListByCardId = catchAsync(async (req, res, next) => {
   const cardId = req.params.id
   const card = await cardModel.findById(cardId).populate('links activities friend_list')
