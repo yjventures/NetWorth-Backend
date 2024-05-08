@@ -116,6 +116,15 @@ exports.deleteCardById = catchAsync(async (req, res, next) => {
       return next(new ErrorHandler(404, "User not found"));
     }
 
+    if (user.cards.length === 1) {
+      return next(
+        new ErrorHandler(
+          400,
+          "You only have one card. Pleaes add another card before deleting this one"
+        )
+      );
+    }
+
     const card = await cardModel.findByIdAndDelete(cardId);
     if (!card) {
       return next(new ErrorHandler(404, "Card not found"));

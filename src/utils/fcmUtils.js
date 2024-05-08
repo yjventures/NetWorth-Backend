@@ -31,7 +31,8 @@ const sendMultiplePushNotification = async (user_id, message) => {
       return false
     }
   } catch (err) {
-    throw err
+    // throw err
+    console.error(err.message)
   }
 }
 

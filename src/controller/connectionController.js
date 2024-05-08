@@ -193,15 +193,16 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
   const recipientCard = await cardModel.findById(recipient_id);
 
   if (!senderCard) {
-    return next(new ErrorHandler(404, "Something Wrong with Sender Card"));
+    return next(new ErrorHandler(404, "Sender not found"));
   }
 
   if (!recipientCard) {
-    return next(new ErrorHandler(404, "Something Wrong with Your Card"));
+    return next(new ErrorHandler(404, "Recipient not found"));
   }
 
   const isInIncoming =
     recipientCard.incoming_friend_request.includes(sender_id);
+  
   const isInOutgoing =
     senderCard.outgoing_friend_request.includes(recipient_id);
 
@@ -259,7 +260,7 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     return next(
       new ErrorHandler(
         404,
-        "Sender not found in either incoming or outgoing requests"
+        "Connection accept request failed"
       )
     );
   }
