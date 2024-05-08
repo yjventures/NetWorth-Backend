@@ -16,11 +16,10 @@ const verifyRefreshToken = require("../utils/verifyRefreshToken");
 const cardModel = require("../model/cardModel");
 
 const regex =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%*?&])[A-Za-z\d@.#$!%*?&]{8,15}$/;
-
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%*?&/]?)[A-Za-z\d@.#$!%*?&/]{8,15}$/;
 
 exports.userRegistration = catchAsync(async (req, res, next) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, fcmToken } = req.body;
 
   //validation checks
   if (!name || !email || !password) {
@@ -46,7 +45,6 @@ exports.userRegistration = catchAsync(async (req, res, next) => {
 
   //hashed the password
   const hashedPassword = await userBcrypt.hashPassword(password);
- 
 
   //create personal info
   const personalInfo = await personalInfoModel.create({
@@ -64,7 +62,15 @@ exports.userRegistration = catchAsync(async (req, res, next) => {
     personal_info: personalInfoId,
   });
 
-  
+  /**fcm token */
+
+  await fcmModel.create({
+    user_id: newUser?._id,
+    fcm_token: fcmToken,
+  });
+
+  // console.log(fcm)
+
   //4 digit otp generate
   const OTPCode = otpGenerator.generate(4, {
     digits: true,
@@ -159,14 +165,15 @@ exports.verifyRegistrationOTP = catchAsync(async (req, res, next) => {
   });
 });
 
-
 //user login
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password, fcmToken } = req.body;
 
-  const user = await userModel.findOne({ email: email, role: "user" }).select("+password");
-  
-  console.log(user)
+  const user = await userModel
+    .findOne({ email: email, role: "user" })
+    .select("+password");
+
+  console.log(user);
 
   if (!user) {
     return next(new ErrorHandler(400, "Username or password are not correct"));
@@ -286,8 +293,6 @@ exports.analyzeDocument = catchAsync(async (req, res, next) => {
     },
   });
 });
-
-
 
 //verify login
 exports.verifyLoginOTP = catchAsync(async (req, res, next) => {
@@ -624,7 +629,7 @@ exports.averagePointData = catchAsync(async (req, res, next) => {
     const averagePointsRounded = averagePoints.toFixed(2);
 
     // Define the maximum possible score
-    const maxPossibleScore = 1500; 
+    const maxPossibleScore = 1500;
 
     // Calculate the percentage
     const percentage = (averagePoints / maxPossibleScore) * 100;
@@ -632,7 +637,7 @@ exports.averagePointData = catchAsync(async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: {
-        percentage: percentage.toFixed(2), 
+        percentage: percentage.toFixed(2),
         totalCards: cards?.length,
       },
     });
@@ -716,14 +721,3 @@ exports.topRankings = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(500, "Internal Server Error"));
   }
 });
-
-
-
-
-
-
-
-
-
-
-
