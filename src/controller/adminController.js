@@ -222,22 +222,33 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
       ],
     });
 
-    // console.log(cardsToUpdate);
-    // return;
-
+    // console.log("cardsToUpdate", cardsToUpdate);
     await Promise.all(
       cardsToUpdate.map(async (cardToUpdate) => {
-        cardToUpdate.friend_list = cardToUpdate.friend_list.filter(
-          (friend) => friend.friend.toString() !== cardId
-        );
-        cardToUpdate.incoming_friend_request =
-          cardToUpdate.incoming_friend_request.filter(
-            (requestId) => requestId.toString() !== cardId
-          );
-        cardToUpdate.outgoing_friend_request =
-          cardToUpdate.outgoing_friend_request.filter(
-            (requestId) => requestId.toString() !== cardId
-          );
+        if (
+          cardToUpdate.friend_list.some(
+            (friend) => friend.friend?._id.toString() === cardId.toString()
+          )
+        ) {
+          await cardModel.findByIdAndUpdate(cardToUpdate._id, {
+            $pull: { friend_list: { friend: cardId } },
+          });
+        }
+
+        if (cardToUpdate.incoming_friend_request.includes(cardId)) {
+          cardToUpdate.incoming_friend_request =
+            cardToUpdate.incoming_friend_request.filter(
+              (requestId) => requestId.toString() !== cardId
+            );
+        }
+
+        if (cardToUpdate.outgoing_friend_request.includes(cardId)) {
+          cardToUpdate.outgoing_friend_request =
+            cardToUpdate.outgoing_friend_request.filter(
+              (requestId) => requestId.toString() !== cardId
+            );
+        }
+
         await cardToUpdate.save();
       })
     );
@@ -247,13 +258,13 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
   await userModel.findByIdAndDelete(userId);
 
   // Send email to the user
-  const emailMessage = `Sorry, Your account has been Deleted from NetWorth Hub`;
-  const emailSubject = "NetWorth";
-  const emailSend = await SendEmailUtils(
-    user.email,
-    emailMessage,
-    emailSubject
-  );
+  // const emailMessage = `Sorry, Your account has been Deleted from NetWorth Hub`;
+  // const emailSubject = "NetWorth";
+  // const emailSend = await SendEmailUtils(
+  //   user.email,
+  //   emailMessage,
+  //   emailSubject
+  // );
 
   return res.status(200).json({
     status: true,
