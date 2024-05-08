@@ -721,3 +721,20 @@ exports.topRankings = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(500, "Internal Server Error"));
   }
 });
+
+exports.checkExistingUserByToken = catchAsync(async (req, res, next) => {
+  const userId = req.headers.userId;
+
+  const user = await userModel.findById(userId);
+
+  if (!user) {
+    return res.status(404).json({
+      message: "User not found",
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "user found",
+  });
+});
