@@ -249,10 +249,22 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
             );
         }
 
+        // console.log("before deletation", cardToUpdate.notifications.length)
+        cardToUpdate.notifications = cardToUpdate.notifications.filter(
+          (notification) => {
+            return !(
+              notification.sender === cardId &&
+              notification.receiver === cardToUpdate._id
+            );
+          }
+        );
+        // console.log("after deletation", cardToUpdate.notifications.length)
+
         await notificationModel.deleteMany({
           $or: [{ sender: cardId }, { receiver: cardId }],
         });
-        
+
+
         await cardToUpdate.save();
       })
     );
