@@ -10,6 +10,7 @@ const axios = require("axios");
 const tempCardModel = require("../model/tempCardModel");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
+const notificationModel = require("../model/notificationModel")
 //create empty card
 exports.createCard = catchAsync(async (req, res, next) => {
   const userId = req.headers.userId;
@@ -167,6 +168,10 @@ exports.deleteCardById = catchAsync(async (req, res, next) => {
             (requestId) => requestId.toString() !== cardId
           );
       }
+
+      await notificationModel.deleteMany({
+        $or: [{ sender: cardId }, { receiver: cardId }],
+      });
 
       await cardToUpdate.save();
     })

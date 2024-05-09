@@ -187,12 +187,12 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
     }
 
     // Delete all notifications associated with the card
-    const notificationsToDelete = card.notifications;
-    await Promise.all(
-      notificationsToDelete.map(async (notificationId) => {
-        await notificationModel.findByIdAndDelete(notificationId);
-      })
-    );
+    // const notificationsToDelete = card.notifications;
+    // await Promise.all(
+    //   notificationsToDelete.map(async (notificationId) => {
+    //     await notificationModel.findByIdAndDelete(notificationId);
+    //   })
+    // );
 
     // Delete all links associated with the card
     const linksToDelete = card.links;
@@ -249,6 +249,10 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
             );
         }
 
+        await notificationModel.deleteMany({
+          $or: [{ sender: cardId }, { receiver: cardId }],
+        });
+        
         await cardToUpdate.save();
       })
     );
