@@ -368,7 +368,7 @@ exports.showOutGoingRequestList = catchAsync(async (req, res, next) => {
 exports.cancelIncomingRequest = catchAsync(async (req, res, next) => {
   const { recipient_id, sender_id } = req.body;
   const senderCard = await cardModel.findById(sender_id);
-  const recipientCard = await cardModel.findById(recipient_id);
+  const recipientCard = await cardModel.findById(recipient_id).populate("notifications")
 
   if (!senderCard) {
     return next(new ErrorHandler(404, "Something Wrong with Sender Card"));
@@ -377,6 +377,26 @@ exports.cancelIncomingRequest = catchAsync(async (req, res, next) => {
   if (!recipientCard) {
     return next(new ErrorHandler(404, "Something Wrong with Your Card"));
   }
+
+  // console.log("recipient card", recipientCard);
+  // console.log("sender", sender_id);
+  // console.log("recipient", recipient_id);
+  // const notificationDeletation = await notificationModel.findOne({
+  //   sender: recipient_id,
+  //   receiver: sender_id,
+  // });
+  // console.log("deletation notification", notificationDeletation);
+  // const notificationExists = recipientCard.notifications.some(
+  //   (notification) => {
+  //     return (
+  //       notification.sender.toString() === recipient_id &&
+  //       notification.receiver.toString() === sender_id
+  //     );
+  //   }
+  // );
+
+  // console.log("notificationExists", notificationExists);
+  // return;
 
   const isInIncoming =
     recipientCard.incoming_friend_request.includes(sender_id);
@@ -390,6 +410,22 @@ exports.cancelIncomingRequest = catchAsync(async (req, res, next) => {
       senderCard.outgoing_friend_request.filter(
         (id) => id.toString() !== recipient_id.toString()
       );
+    
+    recipientCard.notifications = recipientCard.notifications.filter(
+      (notification) => {
+        return !(
+          notification.sender.toString() === recipient_id &&
+          notification.receiver.toString() === sender_id
+        );
+      }
+    );
+
+    const notificationDeletion = await notificationModel.findOneAndDelete({
+      sender: recipient_id,
+      receiver: sender_id,
+    });
+
+    // console.log(notificationDeletion)
   } else {
     return next(
       new ErrorHandler(
