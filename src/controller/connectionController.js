@@ -413,7 +413,7 @@ exports.cancelIncomingRequest = catchAsync(async (req, res, next) => {
 exports.cancelOutgoingRequest = catchAsync(async (req, res, next) => {
   const { recipient_id, sender_id } = req.body;
   const senderCard = await cardModel.findById(sender_id);
-  const recipientCard = await cardModel.findById(recipient_id);
+  const recipientCard = await cardModel.findById(recipient_id).populate("notifications")
 
   if (!senderCard) {
     return next(new ErrorHandler(404, "Something Wrong with Sender Card"));
@@ -423,6 +423,8 @@ exports.cancelOutgoingRequest = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler(404, "Something Wrong with Your Card"));
   }
 
+  
+  // return;
   const isInOutgoing =
     senderCard.outgoing_friend_request.includes(recipient_id);
 
@@ -437,6 +439,25 @@ exports.cancelOutgoingRequest = catchAsync(async (req, res, next) => {
       recipientCard.incoming_friend_request.filter(
         (id) => id.toString() !== sender_id.toString()
       );
+    
+    recipientCard.notifications = recipientCard.notifications.filter(
+      (notification) => {
+        return !(
+          notification.sender.toString() === recipient_id &&
+          notification.receiver.toString() === sender_id
+        );
+      }
+    );
+
+    // await recipientCard.save();
+
+    //delete notification also from the db
+    const notificationDeletion = await notificationModel.findOneAndDelete({
+      sender: recipient_id,
+      receiver: sender_id,
+    });
+
+
   } else {
     return next(
       new ErrorHandler(
