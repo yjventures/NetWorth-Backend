@@ -158,13 +158,45 @@ exports.updateWebFront = catchAsync(async (req, res, next) => {
 
 exports.getWebFront = catchAsync(async (req, res, next) => {
   let webFront = await webFrontModel.findOne();
+  const type = req.query.type;
 
   if (!webFront) {
-    return next(new ErrorHandler(400, 'webFront not found'));
+    return next(new ErrorHandler(400, 'webFront customization not found'));
+  }
+
+  let responseData;
+
+  switch (type) {
+    case 'logo':
+      responseData = {
+        logo: webFront.logo,
+        
+      };
+      break;
+    case 'patterns':
+      responseData = {
+        rootPattern: webFront.rootPattern,
+        authPattern: webFront.authPattern,
+        inboxPattern: webFront.inboxPattern,
+      };
+      break;
+    case 'variables':
+      responseData = {
+        variables: webFront.variables,
+      };
+      break;
+    case 'homepage':
+      responseData = {
+        homepageSlider: webFront.homepageSlider,
+      };
+      break;
+    default:
+      responseData = webFront;
+      break;
   }
 
   res.status(200).json({
     success: true,
-    data: webFront,
+    data: responseData,
   });
 });

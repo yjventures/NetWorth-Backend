@@ -174,4 +174,5 @@ router.get('/user/token-verify', authVerifyMiddleware.authMiddleware, userContro
 router.post('/admin/webfront', authVerifyMiddleware.adminMiddleware, webfrontController.createWebFront);
 
 router.put('/admin/webfront/update', webfrontController.updateWebFront);
+router.get('/webfront', webfrontController.getWebFront);
 module.exports = router;
