@@ -78,10 +78,11 @@ const webFrontSchema = mongoose.Schema({
   fontFamily: String,
   homepageSlider: [
     {
-      image: {
+      image1: {
         type: String,
         required: true,
       },
+      image2: { type: String },
       text: {
         type: String,
         required: true,

@@ -82,17 +82,19 @@ const initValues = {
   fontFamily: 'Arial, sans-serif',
   homepageSlider: [
     {
-      image:
+      image1:
+        'http://rfqbucket.s3-website-ap-southeast-2.amazonaws.com/9664f9fec61737580f02abde2d8c7fe53644a19e53a2eb1e3c563ad7f5b72918.png',
+      image2:
         'http://rfqbucket.s3-website-ap-southeast-2.amazonaws.com/9664f9fec61737580f02abde2d8c7fe53644a19e53a2eb1e3c563ad7f5b72918.png',
       text: 'Welcome to our website',
     },
     {
-      image:
+      image1:
         'http://rfqbucket.s3-website-ap-southeast-2.amazonaws.com/6465e0d42c634c96b0c982dc5997d2ae38a3bbf511bcff93de8171cc04db6253.png',
       text: 'Enjoy our services',
     },
     {
-      image:
+      image1:
         'http://rfqbucket.s3-website-ap-southeast-2.amazonaws.com/9e81463c08fa83bbb597f19c2e6ced361afab308a015826fa525e3caaaee3f9d.png',
       text: 'Check out our new features',
     },
@@ -129,23 +131,29 @@ exports.createWebFront = catchAsync(async (req, res, next) => {
 
 exports.updateWebFront = catchAsync(async (req, res, next) => {
   let webFront = await webFrontModel.findOne();
+  // console.log(webFront);
 
   if (!webFront) {
     webFront = await webFrontModel.create({ ...initValues });
+
+    res.status(200).json({
+      success: true,
+      data: webFront,
+    });
+  } else {
+    // Merge existing webFront data with incoming request data
+    const updatedData = { ...webFront.toObject(), ...req.body };
+
+    const updatedWebFront = await webFrontModel.findByIdAndUpdate(webFront._id, updatedData, {
+      new: true,
+      runValidators: true,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: updatedWebFront,
+    });
   }
-
-  // Merge existing webFront data with incoming request data
-  const updatedData = { ...webFront.toObject(), ...req.body };
-
-  const updatedWebFront = await webFrontModel.findByIdAndUpdate(webFront._id, updatedData, {
-    new: true,
-    runValidators: true,
-  });
-
-  res.status(200).json({
-    success: true,
-    data: updatedWebFront,
-  });
 });
 
 exports.getWebFront = catchAsync(async (req, res, next) => {
