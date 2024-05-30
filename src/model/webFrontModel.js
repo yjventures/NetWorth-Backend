@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 // Define the variables schema
 const variablesSchema = mongoose.Schema(
@@ -16,6 +16,8 @@ const variablesSchema = mongoose.Schema(
     primary_foreground: { type: String, required: true },
     secondary: { type: String, required: true },
     secondary_foreground: { type: String, required: true },
+    tartiary: { type: String, required: true },
+    tartiary_foreground: { type: String, required: true },
     muted: { type: String, required: true },
     muted_foreground: { type: String, required: true },
     accent: { type: String, required: true },
@@ -26,7 +28,7 @@ const variablesSchema = mongoose.Schema(
     input: { type: String, required: true },
     ring: { type: String, required: true },
   },
-  { _id: false }
+  { _id: false },
 );
 
 // Define the web front schema
@@ -88,5 +90,5 @@ const webFrontSchema = mongoose.Schema({
   ],
 });
 
-const webFrontModel = mongoose.model("WebFront", webFrontSchema);
+const webFrontModel = mongoose.model('WebFront', webFrontSchema);
 module.exports = webFrontModel;

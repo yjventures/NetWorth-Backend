@@ -1,29 +1,25 @@
-const ErrorHandler = require("../utils/errorHandler");
-const { catchAsync } = require("../middleware/catchAsyncError");
-const userModel = require("../model/userModel");
-const personalInfoModel = require("../model/personalInfoModel");
-const userBcrypt = require("../utils/userBcrypt");
-const SendEmailUtils = require("../utils/SendEmailUtils");
-const otpGenerator = require("otp-generator");
-const OTPModel = require("../model/OTPModel");
-const fcmModel = require("../model/fcmModel");
-const {
-  AzureKeyCredential,
-  DocumentAnalysisClient,
-} = require("@azure/ai-form-recognizer");
-const jwt = require("jsonwebtoken");
-const verifyRefreshToken = require("../utils/verifyRefreshToken");
-const cardModel = require("../model/cardModel");
+const ErrorHandler = require('../utils/errorHandler');
+const { catchAsync } = require('../middleware/catchAsyncError');
+const userModel = require('../model/userModel');
+const personalInfoModel = require('../model/personalInfoModel');
+const userBcrypt = require('../utils/userBcrypt');
+const SendEmailUtils = require('../utils/SendEmailUtils');
+const otpGenerator = require('otp-generator');
+const OTPModel = require('../model/OTPModel');
+const fcmModel = require('../model/fcmModel');
+const { AzureKeyCredential, DocumentAnalysisClient } = require('@azure/ai-form-recognizer');
+const jwt = require('jsonwebtoken');
+const verifyRefreshToken = require('../utils/verifyRefreshToken');
+const cardModel = require('../model/cardModel');
 
-const regex =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%*?&/]?)[A-Za-z\d@.#$!%*?&/]{8,15}$/;
+const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%*?&/]?)[A-Za-z\d@.#$!%*?&/]{8,15}$/;
 
 exports.userRegistration = catchAsync(async (req, res, next) => {
   const { name, email, password, fcmToken } = req.body;
 
   //validation checks
   if (!name || !email || !password) {
-    return next(new ErrorHandler(400, "All Fields Are Required"));
+    return next(new ErrorHandler(400, 'All Fields Are Required'));
   }
   // console.log(password)
   //password regex check
@@ -31,8 +27,8 @@ exports.userRegistration = catchAsync(async (req, res, next) => {
     return next(
       new ErrorHandler(
         400,
-        "Invalid password format. Password must have at least one lowercase letter, one uppercase letter, one digit, one special character, and be 8-15 characters long."
-      )
+        'Invalid password format. Password must have at least one lowercase letter, one uppercase letter, one digit, one special character, and be 8-15 characters long.',
+      ),
     );
   }
   //check user in db
@@ -40,7 +36,7 @@ exports.userRegistration = catchAsync(async (req, res, next) => {
 
   //if user exist
   if (user) {
-    return next(new ErrorHandler(400, "User Already Exists"));
+    return next(new ErrorHandler(400, 'User Already Exists'));
   }
 
   //hashed the password
@@ -58,7 +54,7 @@ exports.userRegistration = catchAsync(async (req, res, next) => {
   const newUser = await userModel.create({
     email: email,
     password: hashedPassword,
-    role: "user",
+    role: 'user',
     personal_info: personalInfoId,
   });
 
@@ -80,10 +76,7 @@ exports.userRegistration = catchAsync(async (req, res, next) => {
     specialChars: false,
   });
 
-  const userCount = await userModel.aggregate([
-    { $match: { email: email } },
-    { $count: "total" },
-  ]);
+  const userCount = await userModel.aggregate([{ $match: { email: email } }, { $count: 'total' }]);
 
   if (userCount.length > 0) {
     // Insert OTP into the database
@@ -91,27 +84,27 @@ exports.userRegistration = catchAsync(async (req, res, next) => {
 
     // Send email with OTP
     const emailMessage = `Your Verification Pin Code is: ${OTPCode}`;
-    const emailSubject = "NetWorth";
+    const emailSubject = 'NetWorth';
     const emailSend = await SendEmailUtils(email, emailMessage, emailSubject);
 
     // newUser.password = undefined;
 
     return res.status(201).json({
       status: true,
-      message: "Check Your Mail For Verification OTP",
+      message: 'Check Your Mail For Verification OTP',
       // data: newUser,
     });
   } else {
-    return next(new ErrorHandler(400, "User not Found"));
+    return next(new ErrorHandler(400, 'User not Found'));
   }
 });
 
 exports.verifyRegistrationOTP = catchAsync(async (req, res, next) => {
   const { email, otp } = req.body;
-  const user = await userModel.findOne({ email }).select("+password");
+  const user = await userModel.findOne({ email }).select('+password');
 
   if (!user) {
-    return next(new ErrorHandler(404, "User not found"));
+    return next(new ErrorHandler(404, 'User not found'));
   }
 
   // Check if OTP exists and is not expired
@@ -123,7 +116,7 @@ exports.verifyRegistrationOTP = catchAsync(async (req, res, next) => {
   });
 
   if (OTPCount === 0) {
-    return next(new ErrorHandler(400, "Invalid OTP"));
+    return next(new ErrorHandler(400, 'Invalid OTP'));
   }
 
   // Update OTP status to indicate verification
@@ -143,22 +136,18 @@ exports.verifyRegistrationOTP = catchAsync(async (req, res, next) => {
       email: user?.email,
     },
     process.env.SECRET_KEY,
-    { expiresIn: process.env.JWT_EXPIRES_IN }
+    { expiresIn: process.env.JWT_EXPIRES_IN },
   );
 
-  const refreshToken = jwt.sign(
-    { userId: user?._id },
-    process.env.JWT_REFRESH_SECRET,
-    {
-      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
-    }
-  );
+  const refreshToken = jwt.sign({ userId: user?._id }, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+  });
 
   user.password = undefined;
   // Send response
   res.status(200).json({
     status: true,
-    message: "Login successful",
+    message: 'Login successful',
     data: user,
     accessToken: accessToken,
     refreshToken: refreshToken,
@@ -169,19 +158,17 @@ exports.verifyRegistrationOTP = catchAsync(async (req, res, next) => {
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password, fcmToken } = req.body;
 
-  const user = await userModel
-    .findOne({ email: email, role: "user" })
-    .select("+password");
+  const user = await userModel.findOne({ email: email, role: 'user' }).select('+password');
 
   console.log(user);
 
   if (!user) {
-    return next(new ErrorHandler(400, "User email or password are not correct"));
+    return next(new ErrorHandler(400, 'User email or password are not correct'));
   }
 
   const match = await userBcrypt.comparePassword(password, user.password);
   if (!match) {
-    return next(new ErrorHandler(400, "Password Is incorrect"));
+    return next(new ErrorHandler(400, 'Password Is incorrect'));
   }
 
   // const OTPCode = otpGenerator.generate(4, {
@@ -216,7 +203,7 @@ exports.login = catchAsync(async (req, res, next) => {
       user_id: user?._id,
       fcm_token: fcmToken,
     });
-    console.log("New FCM token created:", fcm);
+    console.log('New FCM token created:', fcm);
   } else {
     fcmExists.updatedAt = new Date();
     await fcmExists.save();
@@ -229,21 +216,17 @@ exports.login = catchAsync(async (req, res, next) => {
       email: user?.email,
     },
     process.env.SECRET_KEY,
-    { expiresIn: process.env.JWT_EXPIRES_IN }
+    { expiresIn: process.env.JWT_EXPIRES_IN },
   );
 
-  const refreshToken = jwt.sign(
-    { userId: user?._id },
-    process.env.JWT_REFRESH_SECRET,
-    {
-      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
-    }
-  );
+  const refreshToken = jwt.sign({ userId: user?._id }, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+  });
 
   user.password = undefined;
   res.status(200).json({
     status: true,
-    message: "login successful",
+    message: 'login successful',
     data: user,
     accessToken: accessToken,
     refreshToken: refreshToken,
@@ -256,27 +239,14 @@ exports.analyzeDocument = catchAsync(async (req, res, next) => {
   const endpoint = process.env.ENDPOINT;
 
   // Create Azure Form Recognizer client
-  const client = new DocumentAnalysisClient(
-    endpoint,
-    new AzureKeyCredential(key)
-  );
+  const client = new DocumentAnalysisClient(endpoint, new AzureKeyCredential(key));
 
   // Begin document analysis
-  const poller = await client.beginAnalyzeDocument(
-    "prebuilt-document",
-    imageUrl
-  );
+  const poller = await client.beginAnalyzeDocument('prebuilt-document', imageUrl);
   const { pages } = await poller.pollUntilDone();
 
-  if (
-    !pages ||
-    pages.length === 0 ||
-    !pages[0].lines ||
-    pages[0].lines.length === 0
-  ) {
-    return next(
-      new ErrorHandler(400, "No lines were extracted from the document.")
-    );
+  if (!pages || pages.length === 0 || !pages[0].lines || pages[0].lines.length === 0) {
+    return next(new ErrorHandler(400, 'No lines were extracted from the document.'));
   }
 
   // Extract lines from the analyzed document
@@ -300,24 +270,18 @@ exports.verifyLoginOTP = catchAsync(async (req, res, next) => {
   // console.log(req.body)
 
   // Check if user with the given email exists
-  const user = await userModel
-    .findOne({ email })
-    .populate({ path: "personal_info", select: "bio" })
-    .select("-password");
+  const user = await userModel.findOne({ email }).populate({ path: 'personal_info', select: 'bio' }).select('-password');
 
   // console.log(user)
 
   if (!user) {
-    return next(new ErrorHandler(400, "User not Exists"));
+    return next(new ErrorHandler(400, 'User not Exists'));
   }
 
   let status = 0;
 
   // First OTP count
-  let OTPCount = await OTPModel.aggregate([
-    { $match: { email: email, otp: otp, status: status } },
-    { $count: "total" },
-  ]);
+  let OTPCount = await OTPModel.aggregate([{ $match: { email: email, otp: otp, status: status } }, { $count: 'total' }]);
 
   if (OTPCount.length > 0) {
     let otpUpdate = await OTPModel.updateOne(
@@ -326,7 +290,7 @@ exports.verifyLoginOTP = catchAsync(async (req, res, next) => {
         email: email,
         otp: otp,
         status: 1,
-      }
+      },
     );
 
     // Generate JWT token
@@ -339,28 +303,24 @@ exports.verifyLoginOTP = catchAsync(async (req, res, next) => {
         email: user?.email,
       },
       process.env.SECRET_KEY,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      { expiresIn: process.env.JWT_EXPIRES_IN },
     );
 
-    const refreshToken = jwt.sign(
-      { userId: user?._id },
-      process.env.JWT_REFRESH_SECRET,
-      {
-        expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
-      }
-    );
+    const refreshToken = jwt.sign({ userId: user?._id }, process.env.JWT_REFRESH_SECRET, {
+      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+    });
 
     user.password = undefined;
 
     res.status(200).json({
       success: true,
-      message: "User logged in successfully",
+      message: 'User logged in successfully',
       data: user,
       accessToken: accessToken,
       refreshToken: refreshToken,
     });
   } else {
-    res.status(200).json({ status: false, message: "Invalid OTP Code" });
+    res.status(200).json({ status: false, message: 'Invalid OTP Code' });
   }
 });
 
@@ -368,13 +328,11 @@ exports.generateAccessToken = catchAsync(async (req, res, next) => {
   const { refreshToken } = req.body;
 
   // Verify the refresh token and get userId
-  const verificationResult = await verifyRefreshToken.verifyRefresh(
-    refreshToken
-  );
+  const verificationResult = await verifyRefreshToken.verifyRefresh(refreshToken);
   // console.log(verificationResult);
 
   if (!verificationResult.valid) {
-    return next(new ErrorHandler(401, "Invalid token, try logging in again"));
+    return next(new ErrorHandler(401, 'Invalid token, try logging in again'));
   }
 
   const { userId } = verificationResult;
@@ -385,7 +343,7 @@ exports.generateAccessToken = catchAsync(async (req, res, next) => {
   // console.log("User:", user);
 
   if (!user) {
-    return next(new ErrorHandler(400, "User not found"));
+    return next(new ErrorHandler(400, 'User not found'));
   }
 
   // Generate a new access token
@@ -396,7 +354,7 @@ exports.generateAccessToken = catchAsync(async (req, res, next) => {
       role: user.role,
     },
     process.env.SECRET_KEY,
-    { expiresIn: process.env.JWT_EXPIRES_IN }
+    { expiresIn: process.env.JWT_EXPIRES_IN },
   );
 
   return res.status(200).json({ success: true, accessToken });
@@ -411,20 +369,19 @@ exports.updatePersonalInfo = catchAsync(async (req, res, next) => {
   // Check if the user exists
   const user = await userModel.findById(userId);
   if (!user) {
-    return next(new ErrorHandler(400, "You Are Not Authorized"));
+    return next(new ErrorHandler(400, 'You Are Not Authorized'));
   }
 
   const personalInfoId = user?.personal_info;
 
   // Find and update the personal information
-  const updatedPersonalInfo = await personalInfoModel.findByIdAndUpdate(
-    personalInfoId,
-    reqBody,
-    { new: true, runValidators: true }
-  );
+  const updatedPersonalInfo = await personalInfoModel.findByIdAndUpdate(personalInfoId, reqBody, {
+    new: true,
+    runValidators: true,
+  });
 
   if (!updatedPersonalInfo) {
-    return next(new ErrorHandler(404, "Personal information not found"));
+    return next(new ErrorHandler(404, 'Personal information not found'));
   }
 
   //Optionally, update user's personal_info reference
@@ -433,7 +390,7 @@ exports.updatePersonalInfo = catchAsync(async (req, res, next) => {
 
   return res.status(200).json({
     status: true,
-    message: "Personal information updated successfully",
+    message: 'Personal information updated successfully',
     data: updatedPersonalInfo,
   });
 });
@@ -441,11 +398,11 @@ exports.updatePersonalInfo = catchAsync(async (req, res, next) => {
 //get personal info
 exports.getPersonalInfo = catchAsync(async (req, res, next) => {
   const userId = req.headers.userId;
-  const user = await userModel.findById(userId).populate("personal_info");
+  const user = await userModel.findById(userId).populate('personal_info');
 
   // Check if user exists
   if (!user) {
-    return next(new ErrorHandler(404, "User not found"));
+    return next(new ErrorHandler(404, 'User not found'));
   }
 
   // Check if user.cards exists and is not empty before populating
@@ -453,9 +410,7 @@ exports.getPersonalInfo = catchAsync(async (req, res, next) => {
   //   await user.populate("cards").execPopulate();
   // }
 
-  return res
-    .status(200)
-    .json({ success: true, data: { user, cardLength: user.cards.length } });
+  return res.status(200).json({ success: true, data: { user, cardLength: user.cards.length } });
 });
 
 //forget password related controller
@@ -472,10 +427,7 @@ exports.RecoverVerifyEmail = catchAsync(async (req, res) => {
   });
 
   // Check if the user exists
-  const userCount = await userModel.aggregate([
-    { $match: { email: email } },
-    { $count: "total" },
-  ]);
+  const userCount = await userModel.aggregate([{ $match: { email: email } }, { $count: 'total' }]);
 
   if (userCount.length > 0) {
     // Insert OTP into the database
@@ -483,12 +435,12 @@ exports.RecoverVerifyEmail = catchAsync(async (req, res) => {
 
     // Send email with OTP
     const emailMessage = `Your Pin Code is: ${OTPCode}`;
-    const emailSubject = "RFQ Verification System";
+    const emailSubject = 'RFQ Verification System';
     const emailSend = await SendEmailUtils(email, emailMessage, emailSubject);
 
     res.status(200).json({ status: true, data: emailSend });
   } else {
-    return next(new ErrorHandler(404, "User Not Found"));
+    return next(new ErrorHandler(404, 'User Not Found'));
   }
 });
 
@@ -499,10 +451,7 @@ exports.recoverOTPVerify = catchAsync(async (req, res) => {
   let status = 0;
 
   //first otp count
-  let OTPCount = await OTPModel.aggregate([
-    { $match: { email: email, otp: OTPCode, status: status } },
-    { $count: "total" },
-  ]);
+  let OTPCount = await OTPModel.aggregate([{ $match: { email: email, otp: OTPCode, status: status } }, { $count: 'total' }]);
   if (OTPCount.length > 0) {
     let otpUpdate = await OTPModel.updateOne(
       { email: email, otp: OTPCode, status: status },
@@ -510,24 +459,24 @@ exports.recoverOTPVerify = catchAsync(async (req, res) => {
         email: email,
         otp: OTPCode,
         status: 1,
-      }
+      },
     );
     res.status(200).json({ status: true, data: otpUpdate });
   } else {
-    return next(new ErrorHandler(402, "Invalid OTP Code"));
+    return next(new ErrorHandler(402, 'Invalid OTP Code'));
   }
 });
 
 exports.RecoverResetPassword = catchAsync(async (req, res) => {
-  let email = req.body["email"];
-  let OTPCode = req.body["OTP"];
-  let newPassword = req.body["password"];
+  let email = req.body['email'];
+  let OTPCode = req.body['OTP'];
+  let newPassword = req.body['password'];
 
   let status = 1;
 
   let OTPUsedCount = await OTPModel.aggregate([
     { $match: { email: email, otp: OTPCode, status: status } },
-    { $count: "total" },
+    { $count: 'total' },
   ]);
 
   if (OTPUsedCount.length > 0) {
@@ -535,9 +484,9 @@ exports.RecoverResetPassword = catchAsync(async (req, res) => {
 
     if (!regex.test(password)) {
       return res.status(400).json({
-        status: "fail",
+        status: 'fail',
         message:
-          "Invalid password format. Password must have at least one lowercase letter, one uppercase letter, one digit, one special character, and be 8-15 characters long.",
+          'Invalid password format. Password must have at least one lowercase letter, one uppercase letter, one digit, one special character, and be 8-15 characters long.',
       });
     }
 
@@ -546,15 +495,15 @@ exports.RecoverResetPassword = catchAsync(async (req, res) => {
       { email: email },
       {
         password: hashedPassword,
-      }
+      },
     );
     res.status(200).json({
       status: true,
-      message: "",
+      message: '',
       data: passwordUpdate,
     });
   } else {
-    return next(new ErrorHandler(402, "OTP Code is not valid"));
+    return next(new ErrorHandler(402, 'OTP Code is not valid'));
   }
 });
 
@@ -563,7 +512,7 @@ exports.changePassword = catchAsync(async (req, res, next) => {
   const { old_password, new_password } = req.body;
   const user = await userModel.findById(userId);
   if (!user) {
-    return next(new ErrorHandler(400, "You Are Not Authorized"));
+    return next(new ErrorHandler(400, 'You Are Not Authorized'));
   }
 
   //match old password
@@ -571,7 +520,7 @@ exports.changePassword = catchAsync(async (req, res, next) => {
 
   // console.log(match)
   if (!match) {
-    return next(new ErrorHandler(400, "Old password is incorrect"));
+    return next(new ErrorHandler(400, 'Old password is incorrect'));
   }
 
   //hash new password
@@ -579,8 +528,8 @@ exports.changePassword = catchAsync(async (req, res, next) => {
     return next(
       new ErrorHandler(
         400,
-        "Invalid password format. Password must have at least one lowercase letter, one uppercase letter, one digit, one special character, and be 8-15 characters long."
-      )
+        'Invalid password format. Password must have at least one lowercase letter, one uppercase letter, one digit, one special character, and be 8-15 characters long.',
+      ),
     );
   }
   //hashed the password
@@ -588,16 +537,16 @@ exports.changePassword = catchAsync(async (req, res, next) => {
   const passwordUpdate = await userModel.findByIdAndUpdate(
     userId,
     { password: hashedPassword },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true },
   );
 
   if (!passwordUpdate) {
-    return next(new ErrorHandler(404, "Password not updated"));
+    return next(new ErrorHandler(404, 'Password not updated'));
   }
 
   return res.status(200).json({
     status: true,
-    message: "Password updated successfully",
+    message: 'Password updated successfully',
     // data: passwordUpdate,
   });
 });
@@ -607,12 +556,12 @@ exports.averagePointData = catchAsync(async (req, res, next) => {
   const user = await userModel.findById(userId);
 
   if (!user) {
-    return next(new ErrorHandler(400, "You Are Not Authorized"));
+    return next(new ErrorHandler(400, 'You Are Not Authorized'));
   }
 
   const cardIds = user.cards;
   if (!cardIds || cardIds.length === 0) {
-    return next(new ErrorHandler(400, "No cards found for the user"));
+    return next(new ErrorHandler(400, 'No cards found for the user'));
   }
 
   try {
@@ -642,7 +591,7 @@ exports.averagePointData = catchAsync(async (req, res, next) => {
       },
     });
   } catch (error) {
-    return next(new ErrorHandler(500, "Internal Server Error"));
+    return next(new ErrorHandler(500, 'Internal Server Error'));
   }
 });
 
@@ -650,21 +599,18 @@ exports.topRankings = catchAsync(async (req, res, next) => {
   const userId = req.headers.userId;
   try {
     // Fetch users with role 'user' and populate the personal_info field
-    const users = await userModel.find({ role: "user" }).populate({
-      path: "personal_info",
-      select: "name profile_image",
+    const users = await userModel.find({ role: 'user' }).populate({
+      path: 'personal_info',
+      select: 'name profile_image',
     });
 
     // Calculate total points for each user
     const usersWithTotalPoints = await Promise.all(
       users.map(async (user) => {
         const cards = await cardModel.find({ _id: { $in: user.cards } });
-        const totalPoints = cards.reduce(
-          (acc, card) => acc + (card.total_points || 0),
-          0
-        );
+        const totalPoints = cards.reduce((acc, card) => acc + (card.total_points || 0), 0);
         return { user, totalPoints };
-      })
+      }),
     );
 
     // Sort users by total points in descending order
@@ -681,31 +627,27 @@ exports.topRankings = catchAsync(async (req, res, next) => {
     });
 
     // Prepare response data with ranks, including name and profile_image for top 10
-    let topRankings = usersWithTotalPoints
-      .slice(0, 10)
-      .map(({ user, totalPoints }, index) => ({
-        userId: user._id,
-        username: user.personal_info.name,
-        profile_image: user.personal_info.profile_image,
-        totalPoints,
-        ownId: user._id.toString() === userId,
-        rank: index + 1,
-      }));
+    let topRankings = usersWithTotalPoints.slice(0, 10).map(({ user, totalPoints }, index) => ({
+      userId: user._id,
+      username: user.personal_info.name,
+      profile_image: user.personal_info.profile_image,
+      totalPoints,
+      ownId: user._id.toString() === userId,
+      rank: index + 1,
+    }));
 
     // If the user's ranking is not in the top 10, add their ranking and additional info
     if (ownId && ownRanking > 10) {
-      console.log("hello world");
+      console.log('hello world');
       const ownUser = await userModel.findById(userId).populate({
-        path: "personal_info",
-        select: "name profile_image",
+        path: 'personal_info',
+        select: 'name profile_image',
       });
       const userInfo = {
         userId: ownUser._id,
         username: ownUser.personal_info.name,
         profile_image: ownUser.personal_info.profile_image,
-        totalPoints: usersWithTotalPoints.find(
-          (user) => user.user._id.toString() === userId
-        ).totalPoints,
+        totalPoints: usersWithTotalPoints.find((user) => user.user._id.toString() === userId).totalPoints,
         ownId: true,
         rank: ownRanking,
       };
@@ -718,7 +660,7 @@ exports.topRankings = catchAsync(async (req, res, next) => {
       rankings: topRankings,
     });
   } catch (error) {
-    return next(new ErrorHandler(500, "Internal Server Error"));
+    return next(new ErrorHandler(500, 'Internal Server Error'));
   }
 });
 
@@ -729,12 +671,12 @@ exports.checkExistingUserByToken = catchAsync(async (req, res, next) => {
 
   if (!user) {
     return res.status(404).json({
-      message: "User not found",
+      message: 'User not found',
     });
   }
 
   res.status(200).json({
     success: true,
-    message: "user found",
+    message: 'user found',
   });
 });
