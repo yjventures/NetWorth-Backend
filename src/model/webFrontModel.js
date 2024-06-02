@@ -76,19 +76,38 @@ const webFrontSchema = mongoose.Schema({
     },
   },
   fontFamily: String,
-  homepageSlider: [
-    {
+  homepageSlider: {
+    first: {
       image1: {
         type: String,
         required: true,
       },
-      image2: { type: String },
       text: {
         type: String,
         required: true,
       },
     },
-  ],
+     second: {
+      image1: {
+        type: String,
+        required: true,
+      },
+      text: {
+        type: String,
+        required: true,
+      },
+    },
+      third: {
+      image1: {
+        type: String,
+        required: true,
+      },
+      text: {
+        type: String,
+        required: true,
+      },
+    }
+  }
 });
 
 const webFrontModel = mongoose.model('WebFront', webFrontSchema);
