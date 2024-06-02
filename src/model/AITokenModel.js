@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const aiSchema = mongoose.Schema(
   {
@@ -29,14 +29,14 @@ const aiSchema = mongoose.Schema(
     isEnabled: {
       type: Boolean,
       required: false,
-    }
+    },
   },
   {
     versionKey: false,
     timestamps: true,
-  }
+  },
 );
 
-const aiModel = mongoose.model("ai", aiSchema);
+const aiModel = mongoose.model('ai', aiSchema);
 
 module.exports = aiModel;

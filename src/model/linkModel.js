@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const linkSchema = mongoose.Schema(
   {
@@ -12,9 +12,9 @@ const linkSchema = mongoose.Schema(
   {
     versionKey: false,
     timestamps: true,
-  }
+  },
 );
 
-const linkModel = mongoose.model("Link", linkSchema);
+const linkModel = mongoose.model('Link', linkSchema);
 
 module.exports = linkModel;

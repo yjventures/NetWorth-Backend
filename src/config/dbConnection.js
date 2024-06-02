@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-require("dotenv").config();
+const mongoose = require('mongoose');
+require('dotenv').config();
 
 let URI = process.env.MONGO_URI;
 
@@ -9,7 +9,7 @@ exports.connectToDB = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log("Connected to MongoDB");
+    console.log('Connected to MongoDB');
   } catch (err) {
     console.error(err.message);
   }

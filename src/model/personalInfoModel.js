@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const personalInfoSchema = mongoose.Schema(
   {
@@ -14,9 +14,9 @@ const personalInfoSchema = mongoose.Schema(
   {
     versionKey: false,
     timestamps: true,
-  }
-)
+  },
+);
 
-const personalInfoModel = mongoose.model('PersonalInfo', personalInfoSchema)
+const personalInfoModel = mongoose.model('PersonalInfo', personalInfoSchema);
 
-module.exports = personalInfoModel
+module.exports = personalInfoModel;

@@ -1,12 +1,12 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const cardSchema = mongoose.Schema(
   {
     card_name: String,
     design: {
       type: String,
-      enum: ["linear", "curved", "tilted"],
-      default: "linear",
+      enum: ['linear', 'curved', 'tilted'],
+      default: 'linear',
     },
     color: {
       type: String,
@@ -46,20 +46,20 @@ const cardSchema = mongoose.Schema(
     links: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Link",
+        ref: 'Link',
       },
     ],
     activities: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Activity",
+        ref: 'Activity',
       },
     ],
     friend_list: [
       {
         friend: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Card",
+          ref: 'Card',
         },
         from: {
           type: String,
@@ -73,13 +73,13 @@ const cardSchema = mongoose.Schema(
     incoming_friend_request: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Card",
+        ref: 'Card',
       },
     ],
     outgoing_friend_request: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Card",
+        ref: 'Card',
       },
     ],
     is_private: {
@@ -94,7 +94,7 @@ const cardSchema = mongoose.Schema(
     notifications: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Notification",
+        ref: 'Notification',
       },
     ],
     count: {
@@ -121,14 +121,14 @@ const cardSchema = mongoose.Schema(
     },
     calendly_link: {
       type: String,
-    }
+    },
   },
   {
     versionKey: false,
     timestamps: true,
-  }
+  },
 );
 
-const cardModel = mongoose.model('Card', cardSchema)
+const cardModel = mongoose.model('Card', cardSchema);
 
-module.exports = cardModel
+module.exports = cardModel;

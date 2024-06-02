@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 const activitySchema = mongoose.Schema(
   {
@@ -35,9 +35,9 @@ const activitySchema = mongoose.Schema(
   {
     versionKey: false,
     timestamps: true,
-  }
-)
+  },
+);
 
-const activityModel = mongoose.model('Activity', activitySchema)
+const activityModel = mongoose.model('Activity', activitySchema);
 
-module.exports = activityModel
+module.exports = activityModel;

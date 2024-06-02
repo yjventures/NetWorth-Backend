@@ -1,10 +1,10 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const fcmSchema = mongoose.Schema(
   {
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       required: true,
     },
     fcm_token: {
@@ -13,8 +13,8 @@ const fcmSchema = mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-const fcm = mongoose.model("FCM", fcmSchema);
+const fcm = mongoose.model('FCM', fcmSchema);
 module.exports = fcm;

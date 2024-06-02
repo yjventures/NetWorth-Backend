@@ -1,22 +1,14 @@
-const { catchAsync } = require("../middleware/catchAsyncError");
-const cardModel = require("../model/cardModel");
-const notificationModel = require("../model/notificationModel");
-const tempCardModel = require("../model/tempCardModel");
-const userModel = require("../model/userModel");
-const { encryptData, decryptData } = require("../utils/encryptAndDecryptUtils");
-const ErrorHandler = require("../utils/errorHandler");
-const SendEmailUtils = require("../utils/SendEmailUtils");
+const { catchAsync } = require('../middleware/catchAsyncError');
+const cardModel = require('../model/cardModel');
+const notificationModel = require('../model/notificationModel');
+const tempCardModel = require('../model/tempCardModel');
+const userModel = require('../model/userModel');
+const { encryptData, decryptData } = require('../utils/encryptAndDecryptUtils');
+const ErrorHandler = require('../utils/errorHandler');
+const SendEmailUtils = require('../utils/SendEmailUtils');
 
 exports.createTempCard = catchAsync(async (req, res, next) => {
-  const {
-    name,
-    company_name,
-    address,
-    email,
-    designation,
-    phone_number,
-    invited_card,
-  } = req.body;
+  const { name, company_name, address, email, designation, phone_number, invited_card } = req.body;
 
   // console.log(req.body)
 
@@ -25,7 +17,7 @@ exports.createTempCard = catchAsync(async (req, res, next) => {
   // console.log(inviteeCard)
   // return;
   if (!inviteeCard) {
-    return next(new ErrorHandler(404, "Your Card Not Found"));
+    return next(new ErrorHandler(404, 'Your Card Not Found'));
   }
   // Check if email exists in tempCardModel
   const existingEmailsTempCard = await tempCardModel.findOne({
@@ -81,12 +73,12 @@ exports.createTempCard = catchAsync(async (req, res, next) => {
 
   const emailMessage = `You have an Invitation from the NetWorthHub ${process.env.INVITATION_LINK}?encrypted=${encryptedData}`;
 
-  const emailSubject = "NetWorth";
+  const emailSubject = 'NetWorth';
   const emailSend = await SendEmailUtils(email[0], emailMessage, emailSubject);
 
   res.status(201).json({
     status: true,
-    message: "Invitation Sent Successfully",
+    message: 'Invitation Sent Successfully',
     data: newTempCard,
   });
 });
@@ -108,13 +100,13 @@ exports.decryptTempCardInvitation = catchAsync(async (req, res, next) => {
 
   // console.log(tempCardId)
   const tempCard = await tempCardModel.findById(tempCardId).populate({
-    path: "invited_card",
-    model: "Card",
-    select: "company_name designation name profile_image",
+    path: 'invited_card',
+    model: 'Card',
+    select: 'company_name designation name profile_image',
   });
 
   if (!tempCard) {
-    return next(new ErrorHandler(404, "Card Id not matched"));
+    return next(new ErrorHandler(404, 'Card Id not matched'));
   }
 
   // console.log(tempCard)
@@ -135,7 +127,7 @@ exports.createNewCard = catchAsync(async (req, res, next) => {
   try {
     const user = await userModel.findById(userId);
     if (!user) {
-      return next(new ErrorHandler(400, "User not found"));
+      return next(new ErrorHandler(400, 'User not found'));
     }
     // Create a new card
     const newCard = await cardModel.create(reqBody);
@@ -144,13 +136,13 @@ exports.createNewCard = catchAsync(async (req, res, next) => {
     const card = await cardModel.findOneAndUpdate(
       { _id: inviteeCardId },
       { $pull: { friend_list: tempCardId } },
-      { new: true }
+      { new: true },
     );
 
     // console.log(card);
 
     if (!card) {
-      return res.status(404).json({ message: "Card not found" });
+      return res.status(404).json({ message: 'Card not found' });
     }
 
     if (newCard) {
@@ -161,7 +153,7 @@ exports.createNewCard = catchAsync(async (req, res, next) => {
       const notification = await notificationModel.create({
         sender: card?._id,
         receiver: newCard?._id,
-        text: "accept your invitation and get 250 tokens",
+        text: 'accept your invitation and get 250 tokens',
       });
 
       card.notifications.push(notification?._id);
@@ -173,12 +165,12 @@ exports.createNewCard = catchAsync(async (req, res, next) => {
     const tempCardDelete = await tempCardModel.findByIdAndDelete(tempCardId);
 
     if (!tempCardDelete) {
-      return next(new ErrorHandler(200, "Temp Card Deletation Error"));
+      return next(new ErrorHandler(200, 'Temp Card Deletation Error'));
     }
 
-    return res.status(200).json({ message: "Successfully added new card" });
+    return res.status(200).json({ message: 'Successfully added new card' });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });

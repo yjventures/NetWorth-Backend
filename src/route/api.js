@@ -175,5 +175,5 @@ router.post('/admin/webfront', authVerifyMiddleware.adminMiddleware, webfrontCon
 
 router.put('/admin/webfront/update', webfrontController.updateWebFront);
 router.get('/webfront', webfrontController.getWebFront);
-router.put("/admin/default-customization", webfrontController.useDefaultWebFront)
+router.put('/admin/default-customization', webfrontController.useDefaultWebFront);
 module.exports = router;

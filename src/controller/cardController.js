@@ -1,27 +1,27 @@
-const { catchAsync } = require("../middleware/catchAsyncError");
-const cardModel = require("../model/cardModel");
-const userModel = require("../model/userModel");
-const activityModel = require("../model/ActivityModel");
-const linkModel = require("../model/linkModel");
-const ErrorHandler = require("../utils/errorHandler");
-const { encryptData, decryptData } = require("../utils/encryptAndDecryptUtils");
-const { load } = require("cheerio");
-const axios = require("axios");
-const tempCardModel = require("../model/tempCardModel");
-const jwt = require("jsonwebtoken");
-const mongoose = require("mongoose");
-const notificationModel = require("../model/notificationModel")
+const { catchAsync } = require('../middleware/catchAsyncError');
+const cardModel = require('../model/cardModel');
+const userModel = require('../model/userModel');
+const activityModel = require('../model/ActivityModel');
+const linkModel = require('../model/linkModel');
+const ErrorHandler = require('../utils/errorHandler');
+const { encryptData, decryptData } = require('../utils/encryptAndDecryptUtils');
+const { load } = require('cheerio');
+const axios = require('axios');
+const tempCardModel = require('../model/tempCardModel');
+const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
+const notificationModel = require('../model/notificationModel');
 //create empty card
 exports.createCard = catchAsync(async (req, res, next) => {
   const userId = req.headers.userId;
   const user = await userModel.findById(userId);
   if (!user) {
-    return next(new ErrorHandler(404, "User Not Found"));
+    return next(new ErrorHandler(404, 'User Not Found'));
   }
 
   const newCard = await cardModel.create({});
   if (!newCard) {
-    return next(new ErrorHandler(404, "Something Is Wrong With Creation Card"));
+    return next(new ErrorHandler(404, 'Something Is Wrong With Creation Card'));
   }
 
   user.cards.push(newCard?._id);
@@ -29,7 +29,7 @@ exports.createCard = catchAsync(async (req, res, next) => {
 
   return res.status(200).json({
     status: true,
-    message: "Card Created Successfully",
+    message: 'Card Created Successfully',
     data: newCard,
   });
 });
@@ -45,14 +45,14 @@ exports.updateCard = catchAsync(async (req, res, next) => {
   if (!card) {
     return res.status(404).json({
       status: false,
-      message: "Card not found",
+      message: 'Card not found',
       data: null,
     });
   }
 
   return res.status(200).json({
     status: true,
-    message: "Card updated successfully",
+    message: 'Card updated successfully',
     data: card,
   });
 });
@@ -61,11 +61,11 @@ exports.getCardById = catchAsync(async (req, res, next) => {
   const cardId = req.params.cardId;
   const card = await cardModel
     .findById(cardId)
-    .populate({ path: "links", model: "Link", select: "link platform" })
-    .populate({ path: "activities", model: "Activity" });
+    .populate({ path: 'links', model: 'Link', select: 'link platform' })
+    .populate({ path: 'activities', model: 'Activity' });
 
   if (!card) {
-    return next(new ErrorHandler(404, "Card Not Found"));
+    return next(new ErrorHandler(404, 'Card Not Found'));
   }
 
   return res.status(200).json({
@@ -80,25 +80,25 @@ exports.getAllCard = catchAsync(async (req, res, next) => {
     .findById(userId)
     .populate([
       {
-        path: "cards",
-        model: "Card",
+        path: 'cards',
+        model: 'Card',
         populate: {
-          path: "links",
+          path: 'links',
         },
       },
       {
-        path: "cards",
-        model: "Card",
+        path: 'cards',
+        model: 'Card',
         populate: {
-          path: "activities",
+          path: 'activities',
         },
       },
     ])
 
-    .select("cards");
+    .select('cards');
 
   if (!user) {
-    return next(new ErrorHandler(404, "User Not Found"));
+    return next(new ErrorHandler(404, 'User Not Found'));
   }
 
   return res.status(200).json({
@@ -113,21 +113,16 @@ exports.deleteCardById = catchAsync(async (req, res, next) => {
 
   const user = await userModel.findById(userId);
   if (!user) {
-    return next(new ErrorHandler(404, "User not found"));
+    return next(new ErrorHandler(404, 'User not found'));
   }
 
   if (user.cards.length === 1) {
-    return next(
-      new ErrorHandler(
-        400,
-        "You only have one card. Please add another card before deleting this one"
-      )
-    );
+    return next(new ErrorHandler(400, 'You only have one card. Please add another card before deleting this one'));
   }
 
   const card = await cardModel.findByIdAndDelete(cardId);
   if (!card) {
-    return next(new ErrorHandler(404, "Card not found"));
+    return next(new ErrorHandler(404, 'Card not found'));
   }
 
   // Remove cardId from user's cards array
@@ -136,37 +131,27 @@ exports.deleteCardById = catchAsync(async (req, res, next) => {
 
   // Remove references to this card from other cards' friend_list, incoming_friend_request, and outgoing_friend_request arrays
   const cardsToUpdate = await cardModel.find({
-    $or: [
-      { "friend_list.friend": cardId },
-      { incoming_friend_request: cardId },
-      { outgoing_friend_request: cardId },
-    ],
+    $or: [{ 'friend_list.friend': cardId }, { incoming_friend_request: cardId }, { outgoing_friend_request: cardId }],
   });
 
   await Promise.all(
     cardsToUpdate.map(async (cardToUpdate) => {
-      if (
-        cardToUpdate.friend_list.some(
-          (friend) => friend.friend?.toString() === cardId
-        )
-      ) {
+      if (cardToUpdate.friend_list.some((friend) => friend.friend?.toString() === cardId)) {
         await cardModel.findByIdAndUpdate(cardToUpdate._id, {
           $pull: { friend_list: { friend: cardId } },
         });
       }
 
       if (cardToUpdate.incoming_friend_request.includes(cardId)) {
-        cardToUpdate.incoming_friend_request =
-          cardToUpdate.incoming_friend_request.filter(
-            (requestId) => requestId.toString() !== cardId
-          );
+        cardToUpdate.incoming_friend_request = cardToUpdate.incoming_friend_request.filter(
+          (requestId) => requestId.toString() !== cardId,
+        );
       }
 
       if (cardToUpdate.outgoing_friend_request.includes(cardId)) {
-        cardToUpdate.outgoing_friend_request =
-          cardToUpdate.outgoing_friend_request.filter(
-            (requestId) => requestId.toString() !== cardId
-          );
+        cardToUpdate.outgoing_friend_request = cardToUpdate.outgoing_friend_request.filter(
+          (requestId) => requestId.toString() !== cardId,
+        );
       }
 
       await notificationModel.deleteMany({
@@ -174,12 +159,12 @@ exports.deleteCardById = catchAsync(async (req, res, next) => {
       });
 
       await cardToUpdate.save();
-    })
+    }),
   );
 
   return res.status(200).json({
     status: true,
-    message: "Card deleted successfully",
+    message: 'Card deleted successfully',
   });
 });
 
@@ -190,15 +175,13 @@ exports.createActivity = catchAsync(async (req, res, next) => {
 
   const card = await cardModel.findById(cardId);
   if (!card) {
-    return next(new ErrorHandler(404, "The Card is not found"));
+    return next(new ErrorHandler(404, 'The Card is not found'));
   }
 
   const activity = await activityModel.create(reqBody);
 
   if (!activity) {
-    return next(
-      new ErrorHandler(404, "Something Is Wrong With Activity Creation")
-    );
+    return next(new ErrorHandler(404, 'Something Is Wrong With Activity Creation'));
   }
 
   card.activities.push(activity._id);
@@ -206,7 +189,7 @@ exports.createActivity = catchAsync(async (req, res, next) => {
 
   return res.status(200).json({
     status: true,
-    message: "Activity has been added to the card",
+    message: 'Activity has been added to the card',
     data: activity,
   });
 });
@@ -216,45 +199,38 @@ exports.getAllActivity = catchAsync(async (req, res, next) => {
   const cardId = req.params.cardId;
 
   try {
-    const card = await cardModel
-      .findById(cardId)
-      .populate({ path: "activities", model: "Activity" });
+    const card = await cardModel.findById(cardId).populate({ path: 'activities', model: 'Activity' });
 
     if (!card) {
       return res.status(404).json({
         status: false,
-        message: "Card not found",
+        message: 'Card not found',
       });
     }
 
     if (card.activities.length === 0) {
       return res.status(200).json({
         status: false,
-        message: "This card does not have any activities",
+        message: 'This card does not have any activities',
         data: [],
       });
     }
 
     return res.status(200).json({
       status: true,
-      message: "Activities retrieved successfully",
+      message: 'Activities retrieved successfully',
       data: card.activities,
     });
   } catch (error) {
-    return next(new ErrorHandler(500, "Internal Server Error"));
+    return next(new ErrorHandler(500, 'Internal Server Error'));
   }
 });
 
 exports.getSigleActivity = catchAsync(async (req, res, next) => {
   const activityId = req.params.activityId;
-  const card = await cardModel
-    .findOne({ activities: activityId })
-    .populate("activities")
-    .select("name profile_image");
+  const card = await cardModel.findOne({ activities: activityId }).populate('activities').select('name profile_image');
   if (!card) {
-    return next(
-      new ErrorHandler(404, "Your selected card not found in this page")
-    );
+    return next(new ErrorHandler(404, 'Your selected card not found in this page'));
   }
 
   // console.log(card)
@@ -262,9 +238,7 @@ exports.getSigleActivity = catchAsync(async (req, res, next) => {
   const activity = card.activities[0];
 
   if (!activity) {
-    return next(
-      new ErrorHandler(404, "The Activity is not available on the Card")
-    );
+    return next(new ErrorHandler(404, 'The Activity is not available on the Card'));
   }
 
   return res.status(200).json({
@@ -284,12 +258,12 @@ exports.updateActivity = catchAsync(async (req, res, next) => {
   });
 
   if (!activity) {
-    return next(new ErrorHandler(404, "Something Is Wrong With This Activity"));
+    return next(new ErrorHandler(404, 'Something Is Wrong With This Activity'));
   }
 
   return res.status(200).json({
     status: true,
-    message: "Successfully Updated This Activity",
+    message: 'Successfully Updated This Activity',
     data: activity,
   });
 });
@@ -298,11 +272,11 @@ exports.deleteActivityByIdd = catchAsync(async (req, res, next) => {
   const activityId = req.params.id;
   const activity = await activityModel.findByIdAndDelete(activityId);
   if (!activity) {
-    return next(new ErrorHandler(404, "Something Is Wrong With This Activity"));
+    return next(new ErrorHandler(404, 'Something Is Wrong With This Activity'));
   }
   return res.status(200).json({
     status: true,
-    message: "Successfully Delete This Activity",
+    message: 'Successfully Delete This Activity',
   });
 });
 exports.createLink = catchAsync(async (req, res, next) => {
@@ -311,13 +285,13 @@ exports.createLink = catchAsync(async (req, res, next) => {
 
   const card = await cardModel.findById(cardId);
   if (!card) {
-    return next(new ErrorHandler(404, "The Card is not found"));
+    return next(new ErrorHandler(404, 'The Card is not found'));
   }
 
   const link = await linkModel.create(reqBody);
 
   if (!link) {
-    return next(new ErrorHandler(404, "Something Is Wrong With Link Creation"));
+    return next(new ErrorHandler(404, 'Something Is Wrong With Link Creation'));
   }
 
   card.links.push(link._id);
@@ -325,7 +299,7 @@ exports.createLink = catchAsync(async (req, res, next) => {
 
   return res.status(200).json({
     status: true,
-    message: "Link has been added to the card",
+    message: 'Link has been added to the card',
     data: link,
   });
 });
@@ -335,32 +309,30 @@ exports.getAllLink = catchAsync(async (req, res, next) => {
   const cardId = req.params.cardId;
 
   try {
-    const card = await cardModel
-      .findById(cardId)
-      .populate({ path: "links", model: "Link" });
+    const card = await cardModel.findById(cardId).populate({ path: 'links', model: 'Link' });
 
     if (!card) {
       return res.status(404).json({
         status: false,
-        message: "Card not found",
+        message: 'Card not found',
       });
     }
 
     if (card.links.length === 0) {
       return res.status(200).json({
         status: false,
-        message: "This card does not have any link",
+        message: 'This card does not have any link',
         data: [],
       });
     }
 
     return res.status(200).json({
       status: true,
-      message: "Link retrieved successfully",
+      message: 'Link retrieved successfully',
       data: card.links,
     });
   } catch (error) {
-    return next(new ErrorHandler(500, "Internal Server Error"));
+    return next(new ErrorHandler(500, 'Internal Server Error'));
   }
 });
 
@@ -369,11 +341,11 @@ exports.linkDeleteById = catchAsync(async (req, res, next) => {
 
   const link = await linkModel.findByIdAndDelete(id);
   if (!link) {
-    return next(new ErrorHandler(404, "Something is wrong with the link"));
+    return next(new ErrorHandler(404, 'Something is wrong with the link'));
   }
   return res.status(200).json({
     status: true,
-    message: "Successfully Delete This Link",
+    message: 'Successfully Delete This Link',
   });
 });
 
@@ -389,20 +361,20 @@ exports.updateCardStatus = catchAsync(async (req, res, next) => {
     },
     {
       new: true,
-    }
+    },
   );
 
   if (!card) {
     return res.status(404).json({
       status: false,
-      message: "Something Is Wrong With This Card",
+      message: 'Something Is Wrong With This Card',
       data: null,
     });
   }
 
   return res.status(200).json({
     status: true,
-    message: "Status Update Successfully",
+    message: 'Status Update Successfully',
     data: card,
   });
 });
@@ -413,7 +385,7 @@ exports.generateQRCodeLink = catchAsync(async (req, res, next) => {
   const userId = req.headers.userId;
   const card = await cardModel.findById(card_id);
   if (!card) {
-    return next(new ErrorHandler(200, "Card Id Not Valid"));
+    return next(new ErrorHandler(200, 'Card Id Not Valid'));
   }
 
   const encryptionKey = process.env.INVITATION_ENCRYPTION_KEY;
@@ -448,8 +420,8 @@ exports.decryptQRCodeLink = catchAsync(async (req, res, next) => {
 
   const card = await cardModel
     .findById(decryptedCardId)
-    .populate({ path: "links", model: "Link", select: "link platform" })
-    .populate({ path: "activities", model: "Activity" });
+    .populate({ path: 'links', model: 'Link', select: 'link platform' })
+    .populate({ path: 'activities', model: 'Activity' });
 
   const user = await userModel.findById(decryptedUserId);
   if (!card) {
@@ -481,32 +453,26 @@ exports.getMetaData = async (req, res) => {
     /*function to get needed values from meta tags to generate preview*/
     const getMetaTag = (name) => {
       return (
-        $(`meta[name=${name}]`).attr("content") ||
-        $(`meta[propety="twitter${name}"]`).attr("content") ||
-        $(`meta[property="og:${name}"]`).attr("content")
+        $(`meta[name=${name}]`).attr('content') ||
+        $(`meta[propety="twitter${name}"]`).attr('content') ||
+        $(`meta[property="og:${name}"]`).attr('content')
       );
     };
 
     /*Fetch values into an object */
     const preview = {
       url,
-      title: $("title").first().text(),
-      favicon:
-        $('link[rel="shortcut icon"]').attr("href") ||
-        $('link[rel="alternate icon"]').attr("href"),
-      description: getMetaTag("description"),
-      image: getMetaTag("image"),
-      author: getMetaTag("author"),
+      title: $('title').first().text(),
+      favicon: $('link[rel="shortcut icon"]').attr('href') || $('link[rel="alternate icon"]').attr('href'),
+      description: getMetaTag('description'),
+      image: getMetaTag('image'),
+      author: getMetaTag('author'),
     };
 
     //Send object as response
     res.status(200).json(preview);
   } catch (error) {
-    res
-      .status(500)
-      .json(
-        "Something went wrong, please check your internet connection and also the url you provided"
-      );
+    res.status(500).json('Something went wrong, please check your internet connection and also the url you provided');
   }
 };
 
@@ -518,20 +484,20 @@ exports.showAllActivities = catchAsync(async (req, res, next) => {
   const card = await cardModel
     .findById(id)
     .select(
-      "-design -email -phone_number -links -incoming_friend_request -outgoing_friend_request -address -bio -color -company_logo -company_name -cover_image -designation -status"
+      '-design -email -phone_number -links -incoming_friend_request -outgoing_friend_request -address -bio -color -company_logo -company_name -cover_image -designation -status',
     )
     .populate({
-      path: "friend_list",
-      model: "Card",
+      path: 'friend_list',
+      model: 'Card',
       select:
-        "-design -links -incoming_friend_request -outgoing_friend_request -address -bio -color -company_logo -company_name -cover_image -designation -status -friend_list -phone_number -email",
+        '-design -links -incoming_friend_request -outgoing_friend_request -address -bio -color -company_logo -company_name -cover_image -designation -status -friend_list -phone_number -email',
       populate: {
-        path: "friend",
-        model: "Card",
-        select: "name profile_image", // Select only necessary fields from friend
+        path: 'friend',
+        model: 'Card',
+        select: 'name profile_image', // Select only necessary fields from friend
         populate: {
-          path: "activities",
-          model: "Activity",
+          path: 'activities',
+          model: 'Activity',
         },
       },
     });
@@ -539,17 +505,13 @@ exports.showAllActivities = catchAsync(async (req, res, next) => {
   if (!card) {
     return res.status(404).json({
       status: false,
-      message: "Card not found",
+      message: 'Card not found',
     });
   }
 
   // Extract all activities from the friend_list
   const allActivities = card?.friend_list?.reduce((acc, friend) => {
-    if (
-      friend.friend &&
-      friend.friend.activities &&
-      friend.friend.activities.length > 0
-    ) {
+    if (friend.friend && friend.friend.activities && friend.friend.activities.length > 0) {
       acc.push(
         ...friend.friend.activities.map((activity) => {
           // console.log(activity);
@@ -561,7 +523,7 @@ exports.showAllActivities = catchAsync(async (req, res, next) => {
             },
             activity: activity,
           };
-        })
+        }),
       );
     }
 
@@ -579,13 +541,13 @@ exports.showFriendListForCard = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
   const card = await cardModel.findById(id).populate({
-    path: "friend_list",
-    model: "Card",
-    select: "friend",
+    path: 'friend_list',
+    model: 'Card',
+    select: 'friend',
     populate: {
-      path: "friend",
-      model: "Card",
-      select: "name profile_image designation company_name calendly_link",
+      path: 'friend',
+      model: 'Card',
+      select: 'name profile_image designation company_name calendly_link',
     },
   });
 
@@ -594,7 +556,7 @@ exports.showFriendListForCard = catchAsync(async (req, res, next) => {
   if (!card) {
     return res.status(404).json({
       status: false,
-      message: "Card not found",
+      message: 'Card not found',
     });
   }
 
@@ -614,7 +576,7 @@ exports.checkCardOwner = catchAsync(async (req, res, next) => {
 
   const card = await cardModel.findById(cardId);
   if (!card) {
-    return next(new ErrorHandler(404, "Card Not Found"));
+    return next(new ErrorHandler(404, 'Card Not Found'));
   }
 
   const user = await userModel.findOne({ _id: userId, cards: cardId });
@@ -648,13 +610,13 @@ exports.countTotalVisitior = catchAsync(async (req, res, next) => {
   const card = await cardModel.findById(card_id);
 
   if (!card) {
-    return next(new ErrorHandler(404, "Provided card does not exist"));
+    return next(new ErrorHandler(404, 'Provided card does not exist'));
   }
 
-  const user = await userModel.findById(userId).populate("cards");
+  const user = await userModel.findById(userId).populate('cards');
 
   if (!user) {
-    return res.status(404).json({ error: "User not found" });
+    return res.status(404).json({ error: 'User not found' });
   }
 
   // Check if the card_id exists in the user's cards array
@@ -664,12 +626,12 @@ exports.countTotalVisitior = catchAsync(async (req, res, next) => {
     const updatedCard = await cardModel.findOneAndUpdate(
       { _id: card_id },
       { $inc: { count: 1 } },
-      { new: true, upsert: true }
+      { new: true, upsert: true },
     );
   }
   res.status(200).json({
     status: true,
-    message: "Card count incremented and added to user",
+    message: 'Card count incremented and added to user',
   });
 });
 
@@ -678,11 +640,9 @@ exports.cardAnalyticalData = catchAsync(async (req, res, next) => {
 
   try {
     // Find card data including invite_in_platform
-    const card = await cardModel
-      .findById(id)
-      .select("total_points friend_list invite_in_platform");
+    const card = await cardModel.findById(id).select('total_points friend_list invite_in_platform');
     if (!card) {
-      return next(new ErrorHandler(404, "Card not found"));
+      return next(new ErrorHandler(404, 'Card not found'));
     }
 
     // Calculate additional data for main card
@@ -695,7 +655,7 @@ exports.cardAnalyticalData = catchAsync(async (req, res, next) => {
       if (!acc[monthYear]) {
         acc[monthYear] = { incoming: 0, outgoing: 0, platformInvitation: 0 };
       }
-      if (friend.from === "incoming") {
+      if (friend.from === 'incoming') {
         acc[monthYear].incoming++;
       } else {
         acc[monthYear].outgoing++;
@@ -705,9 +665,7 @@ exports.cardAnalyticalData = catchAsync(async (req, res, next) => {
 
     // Count platform invitations if present
     if (card.invite_in_platform) {
-      const monthYear = new Date(card.invite_in_platform.time_stamp)
-        .toISOString()
-        .slice(0, 7);
+      const monthYear = new Date(card.invite_in_platform.time_stamp).toISOString().slice(0, 7);
       if (!mainCardMonthWiseCounts[monthYear]) {
         mainCardMonthWiseCounts[monthYear] = {
           incoming: 0,
@@ -715,27 +673,24 @@ exports.cardAnalyticalData = catchAsync(async (req, res, next) => {
           platformInvitation: 0,
         };
       }
-      mainCardMonthWiseCounts[monthYear].platformInvitation +=
-        card.invite_in_platform.number;
+      mainCardMonthWiseCounts[monthYear].platformInvitation += card.invite_in_platform.number;
     }
 
     // Convert mainCardMonthWiseCounts object to array of objects with modified format
-    const monthWiseCountsArray = Object.keys(mainCardMonthWiseCounts).map(
-      (key) => {
-        return {
-          month: new Date(key + "-01").toLocaleString("en-us", {
-            month: "short",
-            year: "numeric",
-          }), // Convert to short month format
-          ...mainCardMonthWiseCounts[key],
-        };
-      }
-    );
+    const monthWiseCountsArray = Object.keys(mainCardMonthWiseCounts).map((key) => {
+      return {
+        month: new Date(key + '-01').toLocaleString('en-us', {
+          month: 'short',
+          year: 'numeric',
+        }), // Convert to short month format
+        ...mainCardMonthWiseCounts[key],
+      };
+    });
 
     // Sort monthWiseCountsArray by month in ascending order
     monthWiseCountsArray.sort((a, b) => {
-      const dateA = new Date(a.month + " 01");
-      const dateB = new Date(b.month + " 01");
+      const dateA = new Date(a.month + ' 01');
+      const dateB = new Date(b.month + ' 01');
       return dateA - dateB;
     });
 
@@ -748,6 +703,6 @@ exports.cardAnalyticalData = catchAsync(async (req, res, next) => {
       },
     });
   } catch (error) {
-    return next(new ErrorHandler(500, "Internal Server Error"));
+    return next(new ErrorHandler(500, 'Internal Server Error'));
   }
 });

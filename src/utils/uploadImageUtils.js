@@ -41,6 +41,6 @@ exports.uploadImage = async (req, res) => {
     res.status(200).json({ status: true, uploadedUrl: fileUrl });
   } catch (err) {
     console.error('Error', err);
-    res.status(500).json({ status: false, message:err.message });
+    res.status(500).json({ status: false, message: err.message });
   }
 };

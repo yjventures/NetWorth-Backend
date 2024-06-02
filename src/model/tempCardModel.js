@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const tempCardSchema = mongoose.Schema(
   {
@@ -24,16 +24,15 @@ const tempCardSchema = mongoose.Schema(
     ],
     invited_card: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Card",
+      ref: 'Card',
     },
-    
   },
   {
     versionKey: false,
     timestamps: true,
-  }
+  },
 );
 
-const tempCardModel = mongoose.model("TempCard", tempCardSchema);
+const tempCardModel = mongoose.model('TempCard', tempCardSchema);
 
 module.exports = tempCardModel;

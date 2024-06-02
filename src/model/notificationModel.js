@@ -1,14 +1,14 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const notificationSchema = mongoose.Schema(
   {
     sender: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Card",
+      ref: 'Card',
     },
     receiver: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Card",
+      ref: 'Card',
     },
     text: {
       type: String,
@@ -23,14 +23,14 @@ const notificationSchema = mongoose.Schema(
     },
     redirect_url: {
       type: String,
-    }
+    },
   },
   {
     versionKey: false,
     timestamps: true,
-  }
+  },
 );
 
-const notificationModel = mongoose.model("Notification", notificationSchema);
+const notificationModel = mongoose.model('Notification', notificationSchema);
 
 module.exports = notificationModel;

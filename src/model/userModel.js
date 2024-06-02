@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const userSchema = mongoose.Schema(
   {
@@ -10,7 +10,7 @@ const userSchema = mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "user"],
+      enum: ['admin', 'user'],
     },
     flagged: {
       type: Boolean,
@@ -27,21 +27,21 @@ const userSchema = mongoose.Schema(
 
     personal_info: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "PersonalInfo",
+      ref: 'PersonalInfo',
     },
     cards: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Card",
+        ref: 'Card',
       },
     ],
   },
   {
     versionKey: false,
     timestamps: true,
-  }
+  },
 );
 
-const userModel = mongoose.model("User", userSchema);
+const userModel = mongoose.model('User', userSchema);
 
 module.exports = userModel;

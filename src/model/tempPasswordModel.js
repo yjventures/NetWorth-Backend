@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const tempPasswordSchema = new mongoose.Schema(
   {
     email: {
@@ -19,8 +19,8 @@ const tempPasswordSchema = new mongoose.Schema(
   },
   {
     versionKey: false,
-  }
+  },
 );
 
-const tempPasswordModel = mongoose.model("temp-password", tempPasswordSchema);
+const tempPasswordModel = mongoose.model('temp-password', tempPasswordSchema);
 module.exports = tempPasswordModel;

@@ -1,28 +1,26 @@
-const { catchAsync } = require("../middleware/catchAsyncError");
-const cardModel = require("../model/cardModel");
-const userModel = require("../model/userModel");
-const SendEmailUtils = require("../utils/SendEmailUtils");
-const ErrorHandler = require("../utils/errorHandler");
-const userBcrypt = require("../utils/userBcrypt");
-const jwt = require("jsonwebtoken");
-const generator = require("generate-password");
-const personalInfoModel = require("../model/personalInfoModel");
-const tempPasswordModel = require("../model/tempPasswordModel");
-const {
-  generateLinkForTeamMember,
-} = require("../utils/encryptAndDecryptUtils");
-const { encryptData, decryptData } = require("../utils/encryptAndDecryptUtils");
-const aiModel = require("../model/AITokenModel");
-const linkModel = require("../model/linkModel");
-const activityModel = require("../model/ActivityModel");
-const moment = require("moment");
-const tempCardModel = require("../model/tempCardModel");
-const notificationModel = require("../model/notificationModel");
+const { catchAsync } = require('../middleware/catchAsyncError');
+const cardModel = require('../model/cardModel');
+const userModel = require('../model/userModel');
+const SendEmailUtils = require('../utils/SendEmailUtils');
+const ErrorHandler = require('../utils/errorHandler');
+const userBcrypt = require('../utils/userBcrypt');
+const jwt = require('jsonwebtoken');
+const generator = require('generate-password');
+const personalInfoModel = require('../model/personalInfoModel');
+const tempPasswordModel = require('../model/tempPasswordModel');
+const { generateLinkForTeamMember } = require('../utils/encryptAndDecryptUtils');
+const { encryptData, decryptData } = require('../utils/encryptAndDecryptUtils');
+const aiModel = require('../model/AITokenModel');
+const linkModel = require('../model/linkModel');
+const activityModel = require('../model/ActivityModel');
+const moment = require('moment');
+const tempCardModel = require('../model/tempCardModel');
+const notificationModel = require('../model/notificationModel');
 
 exports.adminLogin = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return next(new ErrorHandler(400, "Email Or Password Required"));
+    return next(new ErrorHandler(400, 'Email Or Password Required'));
   }
   // const adminEmail = process.env.ADMIN_EMAIL;
 
@@ -30,14 +28,14 @@ exports.adminLogin = catchAsync(async (req, res, next) => {
   //   return next(new ErrorHandler(403, "You Are Not Authorized"));
   // }
 
-  const user = await userModel.findOne({ email: email, role: "admin" });
+  const user = await userModel.findOne({ email: email, role: 'admin' });
 
   if (!user) {
-    return next(new ErrorHandler(404, "admin Not Found"));
+    return next(new ErrorHandler(404, 'admin Not Found'));
   }
   const match = await userBcrypt.comparePassword(password, user.password);
   if (!match) {
-    return next(new ErrorHandler(400, "Password Is incorrect"));
+    return next(new ErrorHandler(400, 'Password Is incorrect'));
   }
 
   const accessToken = jwt.sign(
@@ -47,20 +45,20 @@ exports.adminLogin = catchAsync(async (req, res, next) => {
       role: user?.role,
     },
     process.env.ADMIN_SECRET_KEY,
-    { expiresIn: process.env.JWT_EXPIRES_IN }
+    { expiresIn: process.env.JWT_EXPIRES_IN },
   );
   const refreshToken = jwt.sign(
     {
       userId: user?._id,
     },
     process.env.ADMIN_SECRET_KEY,
-    { expiresIn: process.env.JWT_EXPIRES_IN }
+    { expiresIn: process.env.JWT_EXPIRES_IN },
   );
 
   user.password = undefined;
   return res.status(200).json({
     success: true,
-    message: "Admin Login Successful",
+    message: 'Admin Login Successful',
     data: {
       userData: user,
       accessToken: accessToken,
@@ -78,33 +76,33 @@ exports.allUser = catchAsync(async (req, res, next) => {
 
     let sortQuery = { createdAt: -1 };
     if (req.query.sortBy && req.query.sortOrder) {
-      sortQuery[req.query.sortBy] = req.query.sortOrder === "desc" ? -1 : 1;
+      sortQuery[req.query.sortBy] = req.query.sortOrder === 'desc' ? -1 : 1;
     }
 
     let filterQuery = {};
     if (req.query.search) {
       filterQuery.$or = [
-        { email: { $regex: new RegExp(req.query.search, "i") } },
-        { "personal_info.name": { $regex: new RegExp(req.query.search, "i") } },
+        { email: { $regex: new RegExp(req.query.search, 'i') } },
+        { 'personal_info.name': { $regex: new RegExp(req.query.search, 'i') } },
       ];
     }
 
     const totalUsers = await userModel.countDocuments({
-      role: "user",
+      role: 'user',
       ...filterQuery,
     });
 
     const users = await userModel
-      .find({ role: "user", ...filterQuery })
+      .find({ role: 'user', ...filterQuery })
       .sort(sortQuery)
       .skip(skip)
       .limit(limit)
-      .populate({ path: "personal_info", select: "name profile_image" });
+      .populate({ path: 'personal_info', select: 'name profile_image' });
 
     if (users.length === 0) {
       return res.status(200).json({
         status: false,
-        message: "No users found",
+        message: 'No users found',
         data: [],
       });
     }
@@ -118,8 +116,8 @@ exports.allUser = catchAsync(async (req, res, next) => {
         totalUser: totalUsers,
         page: page,
         limit: limit,
-        sortBy: req.query.sortBy || "createdAt", // Default sortBy to createdAt
-        sortOrder: req.query.sortOrder || "desc", // Default sortOrder to desc
+        sortBy: req.query.sortBy || 'createdAt', // Default sortBy to createdAt
+        sortOrder: req.query.sortOrder || 'desc', // Default sortOrder to desc
         currentPage: page,
         totalPages: totalPages,
       },
@@ -135,17 +133,17 @@ exports.getUserDetails = catchAsync(async (req, res, next) => {
   const userId = req.params.userId;
   const role = req.headers.role;
 
-  if (role !== "admin") {
-    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  if (role !== 'admin') {
+    return next(new ErrorHandler(401, 'You Are Not Authorized'));
   }
 
   const user = await userModel
     .findById(userId)
-    .populate("personal_info")
-    .populate({ path: "cards", populate: "activities links" });
+    .populate('personal_info')
+    .populate({ path: 'cards', populate: 'activities links' });
 
   if (!user) {
-    return next(new ErrorHandler(404, "This User Details Not Found"));
+    return next(new ErrorHandler(404, 'This User Details Not Found'));
   }
 
   return res.status(200).json({
@@ -158,14 +156,14 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
   const userId = req.params.userId;
   const role = req.headers.role;
 
-  if (role !== "admin") {
-    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  if (role !== 'admin') {
+    return next(new ErrorHandler(401, 'You Are Not Authorized'));
   }
 
   const user = await userModel.findById(userId);
 
   if (!user) {
-    return next(new ErrorHandler(404, "This User Not Found"));
+    return next(new ErrorHandler(404, 'This User Not Found'));
   }
 
   // Get the personal_info id from the user document
@@ -199,7 +197,7 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
     await Promise.all(
       linksToDelete.map(async (linkId) => {
         await linkModel.findByIdAndDelete(linkId);
-      })
+      }),
     );
 
     // Delete all activities associated with the card
@@ -207,7 +205,7 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
     await Promise.all(
       activitiesToDelete.map(async (activityId) => {
         await activityModel.findByIdAndDelete(activityId);
-      })
+      }),
     );
 
     // Delete the card
@@ -215,58 +213,42 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
 
     // Remove references to this card from other cards' friend_list, incoming_friend_request, and outgoing_friend_request arrays
     const cardsToUpdate = await cardModel.find({
-      $or: [
-        { "friend_list.friend": cardId },
-        { incoming_friend_request: cardId },
-        { outgoing_friend_request: cardId },
-      ],
+      $or: [{ 'friend_list.friend': cardId }, { incoming_friend_request: cardId }, { outgoing_friend_request: cardId }],
     });
 
     // console.log("cardsToUpdate", cardsToUpdate);
     await Promise.all(
       cardsToUpdate.map(async (cardToUpdate) => {
-        if (
-          cardToUpdate.friend_list.some(
-            (friend) => friend.friend?._id.toString() === cardId.toString()
-          )
-        ) {
+        if (cardToUpdate.friend_list.some((friend) => friend.friend?._id.toString() === cardId.toString())) {
           await cardModel.findByIdAndUpdate(cardToUpdate._id, {
             $pull: { friend_list: { friend: cardId } },
           });
         }
 
         if (cardToUpdate.incoming_friend_request.includes(cardId)) {
-          cardToUpdate.incoming_friend_request =
-            cardToUpdate.incoming_friend_request.filter(
-              (requestId) => requestId.toString() !== cardId
-            );
+          cardToUpdate.incoming_friend_request = cardToUpdate.incoming_friend_request.filter(
+            (requestId) => requestId.toString() !== cardId,
+          );
         }
 
         if (cardToUpdate.outgoing_friend_request.includes(cardId)) {
-          cardToUpdate.outgoing_friend_request =
-            cardToUpdate.outgoing_friend_request.filter(
-              (requestId) => requestId.toString() !== cardId
-            );
+          cardToUpdate.outgoing_friend_request = cardToUpdate.outgoing_friend_request.filter(
+            (requestId) => requestId.toString() !== cardId,
+          );
         }
 
         // console.log("before deletation", cardToUpdate.notifications.length)
-        cardToUpdate.notifications = cardToUpdate.notifications.filter(
-          (notification) => {
-            return !(
-              notification.sender === cardId &&
-              notification.receiver === cardToUpdate._id
-            );
-          }
-        );
+        cardToUpdate.notifications = cardToUpdate.notifications.filter((notification) => {
+          return !(notification.sender === cardId && notification.receiver === cardToUpdate._id);
+        });
         // console.log("after deletation", cardToUpdate.notifications.length)
 
         await notificationModel.deleteMany({
           $or: [{ sender: cardId }, { receiver: cardId }],
         });
 
-
         await cardToUpdate.save();
-      })
+      }),
     );
   }
 
@@ -284,7 +266,7 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
 
   return res.status(200).json({
     status: true,
-    message: "Successfully Deleted The User",
+    message: 'Successfully Deleted The User',
     data: user,
   });
 });
@@ -292,11 +274,9 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
 //get all friends list by card id
 exports.getAllFriendsListByCardId = catchAsync(async (req, res, next) => {
   const cardId = req.params.id;
-  const card = await cardModel
-    .findById(cardId)
-    .populate("links activities friend_list");
+  const card = await cardModel.findById(cardId).populate('links activities friend_list');
   if (!card) {
-    return next(new ErrorHandler(404, "Something Is Wrong With This Card"));
+    return next(new ErrorHandler(404, 'Something Is Wrong With This Card'));
   }
 
   return res.status(200).json({
@@ -309,10 +289,10 @@ exports.addAdminTeamMember = async (req, res) => {
   const role = req.headers.role;
   const reqBody = req.body;
   try {
-    if (role !== "admin") {
+    if (role !== 'admin') {
       return res.status(200).json({
-        status: "fail",
-        message: "You are not allowed to add this team member feature",
+        status: 'fail',
+        message: 'You are not allowed to add this team member feature',
       });
     }
     let newMemberInfo;
@@ -325,8 +305,8 @@ exports.addAdminTeamMember = async (req, res) => {
 
     if (existUser) {
       return res.status(400).json({
-        status: "fail",
-        message: "user is already registered in this platform",
+        status: 'fail',
+        message: 'user is already registered in this platform',
       });
     }
 
@@ -337,17 +317,14 @@ exports.addAdminTeamMember = async (req, res) => {
     const newTeamMember = await userModel.create({
       email: reqBody.email,
       // admin_role: reqBody.role,
-      role: "admin",
+      role: 'admin',
       password: passwordCode,
       personal_info: personalInfo?._id,
     });
 
     newMemberInfo = newTeamMember;
 
-    const userCount = await userModel.aggregate([
-      { $match: { email: reqBody.email } },
-      { $count: "total" },
-    ]);
+    const userCount = await userModel.aggregate([{ $match: { email: reqBody.email } }, { $count: 'total' }]);
 
     if (userCount.length > 0) {
       // Insert OTP into the database
@@ -360,16 +337,12 @@ exports.addAdminTeamMember = async (req, res) => {
       // Send a confirmation email to the user
       const emailMessage = `your temp password is  ${passwordCode} <br/> Click here to confirm your invitation as Admin: ${confirmationToken}`;
 
-      const emailSubject = "NetworthHub System Invitation Account Confirmation";
-      const emailSend = await SendEmailUtils(
-        newMemberInfo.email,
-        emailMessage,
-        emailSubject
-      );
+      const emailSubject = 'NetworthHub System Invitation Account Confirmation';
+      const emailSend = await SendEmailUtils(newMemberInfo.email, emailMessage, emailSubject);
       newMemberInfo.password = undefined;
       res.status(200).json({
         status: true,
-        message: "Mail successfully sent to the invited member mail",
+        message: 'Mail successfully sent to the invited member mail',
         data: newMemberInfo,
         emailInfo: emailSend,
       });
@@ -386,35 +359,32 @@ exports.checkTempPasswordAsAdmin = async (req, res) => {
   const user = await userModel.findOne({
     email: email,
     password: password,
-    role: "admin",
+    role: 'admin',
   });
 
   // console.log("email",email)
 
   if (!user) {
-    return res.status(401).json({ message: "Invalid credentials." });
+    return res.status(401).json({ message: 'Invalid credentials.' });
   }
 
   let status = 0;
   try {
     const passwordCount = await tempPasswordModel.aggregate([
       { $match: { email: email, password: password, status: status } },
-      { $count: "total" },
+      { $count: 'total' },
     ]);
 
     if (passwordCount.length > 0) {
-      await tempPasswordModel.updateOne(
-        { email, password, status: status },
-        { email, password, status: 1 }
-      );
+      await tempPasswordModel.updateOne({ email, password, status: status }, { email, password, status: 1 });
 
       return res.status(200).json({
         status: true,
-        message: "temp password verified successfully.",
+        message: 'temp password verified successfully.',
         data: user,
       });
     } else {
-      return res.status(401).json({ message: "Invalid OTP." });
+      return res.status(401).json({ message: 'Invalid OTP.' });
     }
   } catch (error) {
     console.error(error);
@@ -430,17 +400,16 @@ exports.confirmMemberRegistration = async (req, res) => {
     const user = await userModel.findById(invitedUserId);
 
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return res.status(404).json({ message: 'User not found.' });
     }
 
-    const regex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%*?&])[A-Za-z\d@.#$!%*?&]{8,15}$/;
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@.#$!%*?&])[A-Za-z\d@.#$!%*?&]{8,15}$/;
 
     if (!regex.test(password)) {
       return res.status(400).json({
-        status: "fail",
+        status: 'fail',
         message:
-          "Invalid password format. Password must have at least one lowercase letter, one uppercase letter, one digit, one special character, and be 8-15 characters long.",
+          'Invalid password format. Password must have at least one lowercase letter, one uppercase letter, one digit, one special character, and be 8-15 characters long.',
       });
     }
 
@@ -468,13 +437,11 @@ exports.confirmMemberRegistration = async (req, res) => {
 exports.showAllAdmin = catchAsync(async (req, res, next) => {
   const role = req.headers.role;
 
-  if (role !== "admin") {
-    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  if (role !== 'admin') {
+    return next(new ErrorHandler(401, 'You Are Not Authorized'));
   }
 
-  const users = await userModel
-    .find({ role: "admin" })
-    .populate({ path: "personal_info", select: "name" });
+  const users = await userModel.find({ role: 'admin' }).populate({ path: 'personal_info', select: 'name' });
 
   return res.status(200).json({
     status: true,
@@ -485,8 +452,8 @@ exports.showAllAdmin = catchAsync(async (req, res, next) => {
 exports.showAllStatistics = catchAsync(async (req, res, next) => {
   const role = req.headers.role;
 
-  if (role !== "admin") {
-    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  if (role !== 'admin') {
+    return next(new ErrorHandler(401, 'You Are Not Authorized'));
   }
 
   const filter = req.query.filter; // Get the filter from query parameters
@@ -495,30 +462,30 @@ exports.showAllStatistics = catchAsync(async (req, res, next) => {
 
   // Set start and end dates based on the filter
   switch (filter) {
-    case "12months":
-      startDate = moment().subtract(12, "months").startOf("day");
-      endDate = moment().endOf("day");
+    case '12months':
+      startDate = moment().subtract(12, 'months').startOf('day');
+      endDate = moment().endOf('day');
       break;
-    case "30days":
-      startDate = moment().subtract(30, "days").startOf("day");
-      endDate = moment().endOf("day");
+    case '30days':
+      startDate = moment().subtract(30, 'days').startOf('day');
+      endDate = moment().endOf('day');
       break;
-    case "7days":
-      startDate = moment().subtract(7, "days").startOf("day");
-      endDate = moment().endOf("day");
+    case '7days':
+      startDate = moment().subtract(7, 'days').startOf('day');
+      endDate = moment().endOf('day');
       break;
-    case "24hours":
-      startDate = moment().subtract(24, "hours").startOf("hour");
-      endDate = moment().endOf("hour");
+    case '24hours':
+      startDate = moment().subtract(24, 'hours').startOf('hour');
+      endDate = moment().endOf('hour');
       break;
-    case "all": // Added "all" option
+    case 'all': // Added "all" option
       startDate = moment(0); // Start of time
-      endDate = moment().endOf("day");
+      endDate = moment().endOf('day');
       break;
     default:
       // Default to showing all data
       startDate = moment(0); // Start of time
-      endDate = moment().endOf("day");
+      endDate = moment().endOf('day');
   }
 
   // Assuming "userModel" is your User model
@@ -552,7 +519,7 @@ exports.showAllStatistics = catchAsync(async (req, res, next) => {
   });
 
   res.status(200).json({
-    status: "success",
+    status: 'success',
     data: {
       totalUsersCount: userModelLength,
       totalCardsCount: cardModelLength,
@@ -565,24 +532,20 @@ exports.showAllStatistics = catchAsync(async (req, res, next) => {
 exports.getBarData = catchAsync(async (req, res, next) => {
   const role = req.headers.role;
 
-  if (role !== "admin") {
-    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  if (role !== 'admin') {
+    return next(new ErrorHandler(401, 'You Are Not Authorized'));
   }
 
-  const startDate = moment().subtract(12, "months").startOf("month"); // Start 12 months ago
-  const endDate = moment().endOf("month"); // End of current month
+  const startDate = moment().subtract(12, 'months').startOf('month'); // Start 12 months ago
+  const endDate = moment().endOf('month'); // End of current month
 
   // Array to hold monthly data
   const monthlyData = [];
 
   // Loop through each month in the range
-  for (
-    let date = startDate.clone();
-    date.isBefore(endDate);
-    date.add(1, "month")
-  ) {
-    const monthStart = date.clone().startOf("month");
-    const monthEnd = date.clone().endOf("month");
+  for (let date = startDate.clone(); date.isBefore(endDate); date.add(1, 'month')) {
+    const monthStart = date.clone().startOf('month');
+    const monthEnd = date.clone().endOf('month');
 
     const inviteInPlatFormCount = await tempCardModel.countDocuments({
       createdAt: {
@@ -600,7 +563,7 @@ exports.getBarData = catchAsync(async (req, res, next) => {
     });
 
     // Format the date as "MMM DD"
-    const formattedDate = date.format("MMM YY");
+    const formattedDate = date.format('MMM YY');
 
     // Add data for this month to the array
     monthlyData.push({
@@ -619,8 +582,8 @@ exports.getBarData = catchAsync(async (req, res, next) => {
 exports.createAIToken = catchAsync(async (req, res, next) => {
   const role = req.headers.role;
 
-  if (role !== "admin") {
-    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  if (role !== 'admin') {
+    return next(new ErrorHandler(401, 'You Are Not Authorized'));
   }
 
   // Extract API key from the request body
@@ -651,8 +614,8 @@ exports.deleteAIToken = catchAsync(async (req, res, next) => {
   const role = req.headers.role;
   const tokenId = req.params.id;
 
-  if (role !== "admin") {
-    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  if (role !== 'admin') {
+    return next(new ErrorHandler(401, 'You Are Not Authorized'));
   }
 
   // Create new AI token document
@@ -660,7 +623,7 @@ exports.deleteAIToken = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: true,
-    message: "AI token deleted successfully",
+    message: 'AI token deleted successfully',
     data: aiToken,
   });
 });
@@ -670,8 +633,8 @@ exports.updateAIToken = catchAsync(async (req, res, next) => {
     const role = req.headers.role;
     const id = req.params.id;
 
-    if (role !== "admin") {
-      return next(new ErrorHandler(401, "You Are Not Authorized"));
+    if (role !== 'admin') {
+      return next(new ErrorHandler(401, 'You Are Not Authorized'));
     }
 
     const reqBody = req.body;
@@ -688,7 +651,7 @@ exports.updateAIToken = catchAsync(async (req, res, next) => {
     });
 
     if (!aiToken) {
-      return next(new ErrorHandler(404, "AI Token not found"));
+      return next(new ErrorHandler(404, 'AI Token not found'));
     }
 
     res.status(200).json({
@@ -703,21 +666,18 @@ exports.updateAIToken = catchAsync(async (req, res, next) => {
 exports.getToken = catchAsync(async (req, res, next) => {
   const role = req.headers.role;
   const tokenId = req.params.id;
-  if (role !== "admin") {
-    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  if (role !== 'admin') {
+    return next(new ErrorHandler(401, 'You Are Not Authorized'));
   }
 
   const aiToken = await aiModel.findById(tokenId);
   // console.log(aiToken)
 
   if (!aiToken) {
-    return next(new ErrorHandler(404, "AI Token not found"));
+    return next(new ErrorHandler(404, 'AI Token not found'));
   }
 
-  const decryptedApiKey = decryptData(
-    aiToken.api_key,
-    process.env.AI_ENCRYPTION_KEY
-  );
+  const decryptedApiKey = decryptData(aiToken.api_key, process.env.AI_ENCRYPTION_KEY);
 
   // const decryptedApiKey = decryptData(aiToken.api_key, process.env.AI_ENCRYPTION_KEY)
 
@@ -738,8 +698,8 @@ exports.getToken = catchAsync(async (req, res, next) => {
 exports.getAllTokens = catchAsync(async (req, res, next) => {
   const role = req.headers.role;
 
-  if (role !== "admin") {
-    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  if (role !== 'admin') {
+    return next(new ErrorHandler(401, 'You Are Not Authorized'));
   }
 
   // Pagination
@@ -748,10 +708,10 @@ exports.getAllTokens = catchAsync(async (req, res, next) => {
   const skip = (page - 1) * limit;
 
   // Sorting
-  const sortBy = req.query.sortBy || "createdAt";
-  const sortOrder = req.query.sortOrder || "desc";
+  const sortBy = req.query.sortBy || 'createdAt';
+  const sortOrder = req.query.sortOrder || 'desc';
   const sortOptions = {};
-  sortOptions[sortBy] = sortOrder === "asc" ? 1 : -1;
+  sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
   // Retrieve total count of documents
   const totalDocs = await aiModel.countDocuments();
@@ -760,19 +720,12 @@ exports.getAllTokens = catchAsync(async (req, res, next) => {
   const totalPages = Math.ceil(totalDocs / limit);
 
   // Retrieve AI tokens from the database with pagination and sorting
-  const aiTokens = await aiModel
-    .find()
-    .skip(skip)
-    .limit(limit)
-    .sort(sortOptions);
+  const aiTokens = await aiModel.find().skip(skip).limit(limit).sort(sortOptions);
 
   // Decrypt the api_key field for each AI token
   const decryptedTokens = aiTokens.map((aiToken) => {
     // Assuming `api_key` field is encrypted and stored as a string
-    const decryptedApiKey = decryptData(
-      aiToken.api_key,
-      process.env.AI_ENCRYPTION_KEY
-    );
+    const decryptedApiKey = decryptData(aiToken.api_key, process.env.AI_ENCRYPTION_KEY);
     // Return a new object with decrypted api_key
     return {
       ...aiToken.toJSON(),
@@ -798,8 +751,8 @@ exports.enabledAIToken = catchAsync(async (req, res, next) => {
     const role = req.headers.role;
     const id = req.params.id;
 
-    if (role !== "admin") {
-      return next(new ErrorHandler(401, "You Are Not Authorized"));
+    if (role !== 'admin') {
+      return next(new ErrorHandler(401, 'You Are Not Authorized'));
     }
 
     // Update the document with the provided ID to set isEnabled to true
@@ -808,7 +761,7 @@ exports.enabledAIToken = catchAsync(async (req, res, next) => {
       { isEnabled: true },
       {
         new: true,
-      }
+      },
     );
 
     // Update all other documents to set isEnabled to false
@@ -829,14 +782,11 @@ exports.getEnabledAIToken = catchAsync(async (req, res, next) => {
 
     // console.log(enabledAIToken)
     if (!enabledAIToken) {
-      throw new ErrorHandler(404, "No enabled AI token found");
+      throw new ErrorHandler(404, 'No enabled AI token found');
     }
 
     // Decrypt the api_key field
-    const decryptedApiKey = decryptData(
-      enabledAIToken.api_key,
-      process.env.AI_ENCRYPTION_KEY
-    );
+    const decryptedApiKey = decryptData(enabledAIToken.api_key, process.env.AI_ENCRYPTION_KEY);
 
     // Send the response with decrypted api_key
     res.status(200).json({
@@ -855,8 +805,8 @@ exports.updateAAdminPersonalInfo = catchAsync(async (req, res, next) => {
   const userId = req.headers.userId;
   const role = req.headers.role;
 
-  if (role !== "admin") {
-    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  if (role !== 'admin') {
+    return next(new ErrorHandler(401, 'You Are Not Authorized'));
   }
 
   const reqBody = req.body;
@@ -865,20 +815,19 @@ exports.updateAAdminPersonalInfo = catchAsync(async (req, res, next) => {
   // Check if the user exists
   const user = await userModel.findById(userId);
   if (!user) {
-    return next(new ErrorHandler(400, "You Are Not Authorized"));
+    return next(new ErrorHandler(400, 'You Are Not Authorized'));
   }
 
   const personalInfoId = user?.personal_info;
 
   // Find and update the personal information
-  const updatedPersonalInfo = await personalInfoModel.findByIdAndUpdate(
-    personalInfoId,
-    reqBody,
-    { new: true, runValidators: true }
-  );
+  const updatedPersonalInfo = await personalInfoModel.findByIdAndUpdate(personalInfoId, reqBody, {
+    new: true,
+    runValidators: true,
+  });
 
   if (!updatedPersonalInfo) {
-    return next(new ErrorHandler(404, "Personal information not found"));
+    return next(new ErrorHandler(404, 'Personal information not found'));
   }
 
   //Optionally, update user's personal_info reference
@@ -887,7 +836,7 @@ exports.updateAAdminPersonalInfo = catchAsync(async (req, res, next) => {
 
   return res.status(200).json({
     status: true,
-    message: "Personal information updated successfully",
+    message: 'Personal information updated successfully',
     data: updatedPersonalInfo,
   });
 });
@@ -895,14 +844,14 @@ exports.updateAAdminPersonalInfo = catchAsync(async (req, res, next) => {
 exports.getAdminPersonalInfo = catchAsync(async (req, res, next) => {
   const userId = req.headers.userId;
   const role = req.headers.role;
-  if (role !== "admin") {
-    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  if (role !== 'admin') {
+    return next(new ErrorHandler(401, 'You Are Not Authorized'));
   }
-  const user = await userModel.findById(userId).populate("personal_info");
+  const user = await userModel.findById(userId).populate('personal_info');
 
   // Check if user exists
   if (!user) {
-    return next(new ErrorHandler(404, "User not found"));
+    return next(new ErrorHandler(404, 'User not found'));
   }
 
   // Check if user.cards exists and is not empty before populating
@@ -916,8 +865,8 @@ exports.getAdminPersonalInfo = catchAsync(async (req, res, next) => {
 
 exports.targetSignupStatistic = catchAsync(async (req, res, next) => {
   const role = req.headers.role;
-  if (role !== "admin") {
-    return next(new ErrorHandler(401, "You Are Not Authorized"));
+  if (role !== 'admin') {
+    return next(new ErrorHandler(401, 'You Are Not Authorized'));
   }
 
   const today = new Date();

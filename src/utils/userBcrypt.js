@@ -1,5 +1,5 @@
-const bcrypt = require("bcrypt");
-require("dotenv").config();
+const bcrypt = require('bcrypt');
+require('dotenv').config();
 
 exports.hashPassword = async (password) => {
   return new Promise((resolve, reject) => {

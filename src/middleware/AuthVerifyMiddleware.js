@@ -1,16 +1,16 @@
-const jwt = require("jsonwebtoken");
-require("dotenv").config();
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 exports.authMiddleware = (req, res, next) => {
-  let authorization = req.headers["authorization"];
-  let token = authorization?.split(" ")[1];
+  let authorization = req.headers['authorization'];
+  let token = authorization?.split(' ')[1];
 
   jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
     if (err) {
-      res.status(401).json({ status: "unauthorized" });
+      res.status(401).json({ status: 'unauthorized' });
     } else {
-      const userId = decoded["userId"];
-      const role = decoded["role"];
+      const userId = decoded['userId'];
+      const role = decoded['role'];
       req.headers.userId = userId;
       req.headers.role = role;
       next();
@@ -19,20 +19,20 @@ exports.authMiddleware = (req, res, next) => {
 };
 
 exports.adminMiddleware = (req, res, next) => {
-  let authorization = req.headers["authorization"];
-  let token = authorization?.split(" ")[1];
+  let authorization = req.headers['authorization'];
+  let token = authorization?.split(' ')[1];
 
   // console.log(token)
   jwt.verify(token, process.env.ADMIN_SECRET_KEY, (err, decoded) => {
     if (err) {
-      res.status(401).json({ status: "You Are Not authorized As Admin" });
+      res.status(401).json({ status: 'You Are Not authorized As Admin' });
       // console.log(err)
     } else {
-      const userId = decoded["userId"];
-      const email = decoded["email"];
-      const role = decoded["role"];
-      if(role !== "admin"){
-        res.status(401).json({ status: "You Are Not authorized As Admin" });
+      const userId = decoded['userId'];
+      const email = decoded['email'];
+      const role = decoded['role'];
+      if (role !== 'admin') {
+        res.status(401).json({ status: 'You Are Not authorized As Admin' });
       }
       req.headers.userId = userId;
       req.headers.email = email;

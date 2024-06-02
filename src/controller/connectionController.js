@@ -1,17 +1,17 @@
-const { catchAsync } = require("../middleware/catchAsyncError");
-const cardModel = require("../model/cardModel");
-const personalInfoModel = require("../model/personalInfoModel");
-const tempPasswordModel = require("../model/tempPasswordModel");
-const userModel = require("../model/userModel");
-const SendEmailUtils = require("../utils/SendEmailUtils");
-const { encryptData } = require("../utils/encryptAndDecryptUtils");
-const ErrorHandler = require("../utils/errorHandler");
-const generator = require("generate-password");
-const userBcrypt = require("../utils/userBcrypt");
-const notificationModel = require("../model/notificationModel");
-const { sendMultiplePushNotification } = require("../utils/fcmUtils");
-const mongoose = require("mongoose");
-const tempCardModel = require("../model/tempCardModel");
+const { catchAsync } = require('../middleware/catchAsyncError');
+const cardModel = require('../model/cardModel');
+const personalInfoModel = require('../model/personalInfoModel');
+const tempPasswordModel = require('../model/tempPasswordModel');
+const userModel = require('../model/userModel');
+const SendEmailUtils = require('../utils/SendEmailUtils');
+const { encryptData } = require('../utils/encryptAndDecryptUtils');
+const ErrorHandler = require('../utils/errorHandler');
+const generator = require('generate-password');
+const userBcrypt = require('../utils/userBcrypt');
+const notificationModel = require('../model/notificationModel');
+const { sendMultiplePushNotification } = require('../utils/fcmUtils');
+const mongoose = require('mongoose');
+const tempCardModel = require('../model/tempCardModel');
 
 exports.searchContact = catchAsync(async (req, res, next) => {
   try {
@@ -28,39 +28,36 @@ exports.searchContact = catchAsync(async (req, res, next) => {
     }
 
     if (search) {
-      if (search.includes("@")) {
-        query.email = { $regex: `^${search}`, $options: "i" };
+      if (search.includes('@')) {
+        query.email = { $regex: `^${search}`, $options: 'i' };
       } else {
-        query.$or = [
-          { name: { $regex: search, $options: "i" } },
-          { email: { $regex: search, $options: "i" } },
-        ];
+        query.$or = [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }];
       }
     }
 
     if (designation) {
-      query.designation = { $regex: designation, $options: "i" };
+      query.designation = { $regex: designation, $options: 'i' };
     }
 
     // For city and country
     if (city && country) {
-      const cityRegex = new RegExp(city, "i");
-      const countryRegex = new RegExp(country, "i");
+      const cityRegex = new RegExp(city, 'i');
+      const countryRegex = new RegExp(country, 'i');
       query.address = {
         $regex: `${cityRegex.source}.*${countryRegex.source}`,
-        $options: "i",
+        $options: 'i',
       };
     } else if (city) {
-      const cityRegex = new RegExp(city, "i");
+      const cityRegex = new RegExp(city, 'i');
       query.address = {
         $regex: cityRegex.source,
-        $options: "i",
+        $options: 'i',
       };
     } else if (country) {
-      const countryRegex = new RegExp(country, "i");
+      const countryRegex = new RegExp(country, 'i');
       query.address = {
         $regex: countryRegex.source,
-        $options: "i",
+        $options: 'i',
       };
       console.log(query);
     }
@@ -78,18 +75,14 @@ exports.searchContact = catchAsync(async (req, res, next) => {
 
     // Iterate through search results to add button information
     const searchResultWithButtons = searchResult.map((result) => {
-      let button = "";
+      let button = '';
       if (senderCard) {
         if (senderCard.outgoing_friend_request.includes(result._id)) {
-          button = "outgoing";
+          button = 'outgoing';
         } else if (senderCard.incoming_friend_request.includes(result._id)) {
-          button = "incoming";
-        } else if (
-          senderCard.friend_list.some(
-            (friend) => friend.friend._id.toString() === result._id.toString()
-          )
-        ) {
-          button = "friend";
+          button = 'incoming';
+        } else if (senderCard.friend_list.some((friend) => friend.friend._id.toString() === result._id.toString())) {
+          button = 'friend';
         }
       }
       return { ...result.toObject(), button };
@@ -112,22 +105,19 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
   const senderCard = await cardModel.findById(sender_id);
   // Check if either user does not exist
   if (!senderCard) {
-    return next(new ErrorHandler(404, "Sender card not found"));
+    return next(new ErrorHandler(404, 'Sender card not found'));
   }
   const recipientCard = await cardModel.findById(recipient_id);
 
   if (!recipientCard) {
-    return next(new ErrorHandler(404, "Recipient card not found"));
+    return next(new ErrorHandler(404, 'Recipient card not found'));
   }
 
   // Check if the recipient is already in the sender's outgoing_friend_request
-  const existsInOutgoing =
-    senderCard.outgoing_friend_request.includes(recipient_id);
+  const existsInOutgoing = senderCard.outgoing_friend_request.includes(recipient_id);
 
   if (existsInOutgoing) {
-    return next(
-      new ErrorHandler(403, "You Already send the connection request")
-    );
+    return next(new ErrorHandler(403, 'You Already send the connection request'));
   }
 
   const recipientIsConnected = senderCard?.friend_list?.some((friend) => {
@@ -139,17 +129,12 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
   // console.log("recipientIsConnected", recipientIsConnected);
 
   if (recipientIsConnected) {
-    return next(
-      new ErrorHandler(403, "You are Already connected with this connectiion")
-    );
+    return next(new ErrorHandler(403, 'You are Already connected with this connectiion'));
   }
 
-  const recipientIsInIncoming =
-    senderCard?.incoming_friend_request.includes(recipient_id);
+  const recipientIsInIncoming = senderCard?.incoming_friend_request.includes(recipient_id);
   if (recipientIsInIncoming) {
-    return next(
-      new ErrorHandler(403, "You received friend request from this user")
-    );
+    return next(new ErrorHandler(403, 'You received friend request from this user'));
   }
 
   // Add recipientCard to sender's outgoing_friend_request
@@ -162,7 +147,7 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
   const notification = await notificationModel.create({
     sender: recipient_id,
     receiver: sender_id,
-    text: "requested to connect",
+    text: 'requested to connect',
     redirect_url: `/cards/${sender_id}?from=incoming_request`,
   });
 
@@ -175,14 +160,11 @@ exports.sendConnectionRequest = catchAsync(async (req, res, next) => {
 
   const user = await userModel.findOne({ cards: recipient_id });
 
-  await sendMultiplePushNotification(
-    user?._id,
-    `You Received a connection request`
-  );
+  await sendMultiplePushNotification(user?._id, `You Received a connection request`);
 
   return res.status(200).json({
     status: true,
-    message: "Connection request sent successfully.",
+    message: 'Connection request sent successfully.',
   });
 });
 
@@ -193,38 +175,34 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
   const recipientCard = await cardModel.findById(recipient_id);
 
   if (!senderCard) {
-    return next(new ErrorHandler(404, "Sender not found"));
+    return next(new ErrorHandler(404, 'Sender not found'));
   }
 
   if (!recipientCard) {
-    return next(new ErrorHandler(404, "Recipient not found"));
+    return next(new ErrorHandler(404, 'Recipient not found'));
   }
 
-  const isInIncoming =
-    recipientCard.incoming_friend_request.includes(sender_id);
-  
-  const isInOutgoing =
-    senderCard.outgoing_friend_request.includes(recipient_id);
+  const isInIncoming = recipientCard.incoming_friend_request.includes(sender_id);
+
+  const isInOutgoing = senderCard.outgoing_friend_request.includes(recipient_id);
 
   if (isInIncoming) {
     // Remove sender_id from recipientCard's incoming_friend_request
-    recipientCard.incoming_friend_request =
-      recipientCard.incoming_friend_request.filter(
-        (id) => id.toString() !== sender_id.toString()
-      );
+    recipientCard.incoming_friend_request = recipientCard.incoming_friend_request.filter(
+      (id) => id.toString() !== sender_id.toString(),
+    );
 
     // Add sender_id to recipientCard's friend_list with a timestamp
     recipientCard.friend_list.push({
       friend: sender_id,
-      from: "incoming",
+      from: 'incoming',
       time_stamp: new Date(),
     });
 
     // Remove recipient_id from senderCard's outgoing_friend_request
-    senderCard.outgoing_friend_request =
-      senderCard.outgoing_friend_request.filter(
-        (id) => id.toString() !== recipient_id.toString()
-      );
+    senderCard.outgoing_friend_request = senderCard.outgoing_friend_request.filter(
+      (id) => id.toString() !== recipient_id.toString(),
+    );
 
     // Add recipient_id to senderCard's friend_list with a timestamp
     senderCard.friend_list.push({
@@ -233,10 +211,9 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     });
   } else if (isInOutgoing) {
     // Remove recipient_id from senderCard's outgoing_friend_request
-    senderCard.outgoing_friend_request =
-      senderCard.outgoing_friend_request.filter(
-        (id) => id.toString() !== recipient_id.toString()
-      );
+    senderCard.outgoing_friend_request = senderCard.outgoing_friend_request.filter(
+      (id) => id.toString() !== recipient_id.toString(),
+    );
 
     // Add recipient_id to senderCard's friend_list with a timestamp
     senderCard.friend_list.push({
@@ -245,10 +222,9 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     });
 
     // Remove sender_id from recipientCard's incoming_friend_request
-    recipientCard.incoming_friend_request =
-      recipientCard.incoming_friend_request.filter(
-        (id) => id.toString() !== sender_id.toString()
-      );
+    recipientCard.incoming_friend_request = recipientCard.incoming_friend_request.filter(
+      (id) => id.toString() !== sender_id.toString(),
+    );
 
     // Add sender_id to recipientCard's friend_list with a timestamp
     recipientCard.friend_list.push({
@@ -257,12 +233,7 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
     });
   } else {
     // If sender is not in either list, return an error
-    return next(
-      new ErrorHandler(
-        404,
-        "Connection accept request failed"
-      )
-    );
+    return next(new ErrorHandler(404, 'Connection accept request failed'));
   }
 
   // Increment points for receiver and sender
@@ -275,7 +246,7 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
   const notification = await notificationModel.create({
     sender: sender_id,
     receiver: recipient_id,
-    text: "accepted your connection request",
+    text: 'accepted your connection request',
     redirect_url: `/cards/${recipient_id}?from=outgoing_request`,
   });
 
@@ -290,7 +261,7 @@ exports.acceptConnectionRequest = catchAsync(async (req, res, next) => {
   await sendMultiplePushNotification(user?._id, `Connection Request Accept`);
   return res.status(200).json({
     status: true,
-    message: "Connection request accepted. Users are now friends.",
+    message: 'Connection request accepted. Users are now friends.',
   });
 });
 
@@ -299,8 +270,8 @@ exports.showInComingRequestList = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
   const incomingRequest = await cardModel.findById(id).populate({
-    path: "incoming_friend_request",
-    model: "Card",
+    path: 'incoming_friend_request',
+    model: 'Card',
   }).select(`
     -outgoing_friend_request 
     -friend_list
@@ -318,9 +289,7 @@ exports.showInComingRequestList = catchAsync(async (req, res, next) => {
   `);
 
   if (!incomingRequest) {
-    return next(
-      new ErrorHandler(200, "Something is Wrong With Card Incoming Request")
-    );
+    return next(new ErrorHandler(200, 'Something is Wrong With Card Incoming Request'));
   }
 
   return res.status(200).json({
@@ -334,8 +303,8 @@ exports.showOutGoingRequestList = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
   const outgoingRequest = await cardModel.findById(id).populate({
-    path: "outgoing_friend_request",
-    model: "Card",
+    path: 'outgoing_friend_request',
+    model: 'Card',
   }).select(`
     -incoming_friend_request 
     -friend_list
@@ -353,9 +322,7 @@ exports.showOutGoingRequestList = catchAsync(async (req, res, next) => {
   `);
 
   if (!outgoingRequest) {
-    return next(
-      new ErrorHandler(200, "Something is Wrong With Card outgoing Request")
-    );
+    return next(new ErrorHandler(200, 'Something is Wrong With Card outgoing Request'));
   }
 
   return res.status(200).json({
@@ -368,14 +335,14 @@ exports.showOutGoingRequestList = catchAsync(async (req, res, next) => {
 exports.cancelIncomingRequest = catchAsync(async (req, res, next) => {
   const { recipient_id, sender_id } = req.body;
   const senderCard = await cardModel.findById(sender_id);
-  const recipientCard = await cardModel.findById(recipient_id).populate("notifications")
+  const recipientCard = await cardModel.findById(recipient_id).populate('notifications');
 
   if (!senderCard) {
-    return next(new ErrorHandler(404, "Something Wrong with Sender Card"));
+    return next(new ErrorHandler(404, 'Something Wrong with Sender Card'));
   }
 
   if (!recipientCard) {
-    return next(new ErrorHandler(404, "Something Wrong with Your Card"));
+    return next(new ErrorHandler(404, 'Something Wrong with Your Card'));
   }
 
   // console.log("recipient card", recipientCard);
@@ -398,27 +365,19 @@ exports.cancelIncomingRequest = catchAsync(async (req, res, next) => {
   // console.log("notificationExists", notificationExists);
   // return;
 
-  const isInIncoming =
-    recipientCard.incoming_friend_request.includes(sender_id);
+  const isInIncoming = recipientCard.incoming_friend_request.includes(sender_id);
 
   if (isInIncoming) {
-    recipientCard.incoming_friend_request =
-      recipientCard.incoming_friend_request.filter(
-        (id) => id.toString() !== sender_id.toString()
-      );
-    senderCard.outgoing_friend_request =
-      senderCard.outgoing_friend_request.filter(
-        (id) => id.toString() !== recipient_id.toString()
-      );
-    
-    recipientCard.notifications = recipientCard.notifications.filter(
-      (notification) => {
-        return !(
-          notification.sender.toString() === recipient_id &&
-          notification.receiver.toString() === sender_id
-        );
-      }
+    recipientCard.incoming_friend_request = recipientCard.incoming_friend_request.filter(
+      (id) => id.toString() !== sender_id.toString(),
     );
+    senderCard.outgoing_friend_request = senderCard.outgoing_friend_request.filter(
+      (id) => id.toString() !== recipient_id.toString(),
+    );
+
+    recipientCard.notifications = recipientCard.notifications.filter((notification) => {
+      return !(notification.sender.toString() === recipient_id && notification.receiver.toString() === sender_id);
+    });
 
     const notificationDeletion = await notificationModel.findOneAndDelete({
       sender: recipient_id,
@@ -427,12 +386,7 @@ exports.cancelIncomingRequest = catchAsync(async (req, res, next) => {
 
     // console.log(notificationDeletion)
   } else {
-    return next(
-      new ErrorHandler(
-        404,
-        "Sender not found in either incoming or outgoing requests"
-      )
-    );
+    return next(new ErrorHandler(404, 'Sender not found in either incoming or outgoing requests'));
   }
 
   // Save the updated sender and recipient cards
@@ -441,7 +395,7 @@ exports.cancelIncomingRequest = catchAsync(async (req, res, next) => {
 
   return res.status(200).json({
     status: true,
-    message: "Connection Request Cancelled",
+    message: 'Connection Request Cancelled',
   });
 });
 
@@ -449,41 +403,32 @@ exports.cancelIncomingRequest = catchAsync(async (req, res, next) => {
 exports.cancelOutgoingRequest = catchAsync(async (req, res, next) => {
   const { recipient_id, sender_id } = req.body;
   const senderCard = await cardModel.findById(sender_id);
-  const recipientCard = await cardModel.findById(recipient_id).populate("notifications")
+  const recipientCard = await cardModel.findById(recipient_id).populate('notifications');
 
   if (!senderCard) {
-    return next(new ErrorHandler(404, "Something Wrong with Sender Card"));
+    return next(new ErrorHandler(404, 'Something Wrong with Sender Card'));
   }
 
   if (!recipientCard) {
-    return next(new ErrorHandler(404, "Something Wrong with Your Card"));
+    return next(new ErrorHandler(404, 'Something Wrong with Your Card'));
   }
 
-  
   // return;
-  const isInOutgoing =
-    senderCard.outgoing_friend_request.includes(recipient_id);
+  const isInOutgoing = senderCard.outgoing_friend_request.includes(recipient_id);
 
   if (isInOutgoing) {
-    senderCard.outgoing_friend_request =
-      senderCard.outgoing_friend_request.filter(
-        (id) => id.toString() !== recipient_id.toString()
-      );
+    senderCard.outgoing_friend_request = senderCard.outgoing_friend_request.filter(
+      (id) => id.toString() !== recipient_id.toString(),
+    );
 
     // Remove sender_id from recipientCard's incoming_friend_request
-    recipientCard.incoming_friend_request =
-      recipientCard.incoming_friend_request.filter(
-        (id) => id.toString() !== sender_id.toString()
-      );
-    
-    recipientCard.notifications = recipientCard.notifications.filter(
-      (notification) => {
-        return !(
-          notification.sender.toString() === recipient_id &&
-          notification.receiver.toString() === sender_id
-        );
-      }
+    recipientCard.incoming_friend_request = recipientCard.incoming_friend_request.filter(
+      (id) => id.toString() !== sender_id.toString(),
     );
+
+    recipientCard.notifications = recipientCard.notifications.filter((notification) => {
+      return !(notification.sender.toString() === recipient_id && notification.receiver.toString() === sender_id);
+    });
 
     // await recipientCard.save();
 
@@ -492,15 +437,8 @@ exports.cancelOutgoingRequest = catchAsync(async (req, res, next) => {
       sender: recipient_id,
       receiver: sender_id,
     });
-
-
   } else {
-    return next(
-      new ErrorHandler(
-        404,
-        "Sender not found in either incoming or outgoing requests"
-      )
-    );
+    return next(new ErrorHandler(404, 'Sender not found in either incoming or outgoing requests'));
   }
 
   // Save the updated sender and recipient cards
@@ -509,7 +447,7 @@ exports.cancelOutgoingRequest = catchAsync(async (req, res, next) => {
 
   return res.status(200).json({
     status: true,
-    message: "Connection Request Cancelled",
+    message: 'Connection Request Cancelled',
   });
 });
 
@@ -517,15 +455,13 @@ exports.countUnreadNotifications = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
   try {
-    const card = await cardModel.findById(id).populate("notifications");
+    const card = await cardModel.findById(id).populate('notifications');
     if (!card) {
-      return next(new ErrorHandler(404, "Card not found"));
+      return next(new ErrorHandler(404, 'Card not found'));
     }
 
     // Filter notifications where read is false
-    const unreadNotifications = card.notifications.filter(
-      (notification) => notification.read === false
-    );
+    const unreadNotifications = card.notifications.filter((notification) => notification.read === false);
 
     // console.log(unreadNotifications)
     const unreadCount = unreadNotifications.length;
@@ -537,7 +473,7 @@ exports.countUnreadNotifications = catchAsync(async (req, res, next) => {
       },
     });
   } catch (error) {
-    return next(new ErrorHandler(500, "Internal Server Error"));
+    return next(new ErrorHandler(500, 'Internal Server Error'));
   }
 });
 
@@ -545,9 +481,9 @@ exports.getUnreadNotificationIds = catchAsync(async (req, res, next) => {
   const id = req.params.id;
 
   try {
-    const card = await cardModel.findById(id).populate("notifications");
+    const card = await cardModel.findById(id).populate('notifications');
     if (!card) {
-      return next(new ErrorHandler(404, "Card not found"));
+      return next(new ErrorHandler(404, 'Card not found'));
     }
 
     // Filter notifications where read is false and extract their _id values
@@ -560,7 +496,7 @@ exports.getUnreadNotificationIds = catchAsync(async (req, res, next) => {
       data: unreadNotificationIds,
     });
   } catch (error) {
-    return next(new ErrorHandler(500, "Internal Server Error"));
+    return next(new ErrorHandler(500, 'Internal Server Error'));
   }
 });
 
@@ -570,18 +506,15 @@ exports.markNotificationsAsRead = catchAsync(async (req, res, next) => {
   try {
     // Check if notificationIds array is provided
     if (!notificationIds || !Array.isArray(notificationIds)) {
-      return next(new ErrorHandler(400, "Notification IDs array is required"));
+      return next(new ErrorHandler(400, 'Notification IDs array is required'));
     }
 
     // Update notifications with provided IDs to set read field to true
-    await notificationModel.updateMany(
-      { _id: { $in: notificationIds } },
-      { $set: { read: true } }
-    );
+    await notificationModel.updateMany({ _id: { $in: notificationIds } }, { $set: { read: true } });
 
     return res.status(200).json({
       status: true,
-      message: "Notifications marked as read successfully",
+      message: 'Notifications marked as read successfully',
     });
   } catch (error) {
     return next(new ErrorHandler(500, error));
@@ -612,78 +545,74 @@ exports.checkCardInFriendListOrNot = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.cardIniatializationFormInvitation = catchAsync(
-  async (req, res, next) => {
-    const userId = req.headers.userId;
+exports.cardIniatializationFormInvitation = catchAsync(async (req, res, next) => {
+  const userId = req.headers.userId;
 
-    const user = await userModel.findById(userId);
-    if (!user) {
-      return next(new ErrorHandler(404, "user not found!"));
-    }
-
-    const { invited_id, temp_card_id } = req.body;
-
-    // console.log(invited_id, temp_card_id)
-
-    const invitedCard = await cardModel.findById(invited_id);
-    if (!invitedCard) {
-      return next(new ErrorHandler(404, "Invited card not found"));
-    }
-
-    // console.log(invitedCard)
-    // return;
-    const newCard = await cardModel.create({});
-
-    // console.log(newCard)
-    // return;
-    if (!newCard) {
-      return next(new ErrorHandler(404, "Card creation failed!"));
-    }
-    // invitedCard.friend_list.push(newCard);
-    invitedCard?.friend_list?.push({
-      friend: newCard,
-      from: "",
-      time_stamp: new Date(),
-    });
-
-    newCard?.friend_list?.push({
-      friend: invitedCard,
-      from: "",
-      time_stamp: new Date(),
-    });
-
-    user?.cards.push(newCard);
-
-    await invitedCard.save();
-    await newCard.save();
-    await user.save();
-
-    // console.log("invitedCard", invitedCard)
-    // console.log("new Card", newCard)
-
-    // console.log(invitedCard)
-    const tempCard = await tempCardModel.findByIdAndDelete(temp_card_id);
-
-    if (!tempCard) {
-      return next(
-        new ErrorHandler(404, "Temporary card not found or already deleted!")
-      );
-    }
-    // console.log("delete temp card ", tempCard);
-
-    return res.status(200).json({
-      status: true,
-      data: newCard?._id,
-    });
+  const user = await userModel.findById(userId);
+  if (!user) {
+    return next(new ErrorHandler(404, 'user not found!'));
   }
-);
+
+  const { invited_id, temp_card_id } = req.body;
+
+  // console.log(invited_id, temp_card_id)
+
+  const invitedCard = await cardModel.findById(invited_id);
+  if (!invitedCard) {
+    return next(new ErrorHandler(404, 'Invited card not found'));
+  }
+
+  // console.log(invitedCard)
+  // return;
+  const newCard = await cardModel.create({});
+
+  // console.log(newCard)
+  // return;
+  if (!newCard) {
+    return next(new ErrorHandler(404, 'Card creation failed!'));
+  }
+  // invitedCard.friend_list.push(newCard);
+  invitedCard?.friend_list?.push({
+    friend: newCard,
+    from: '',
+    time_stamp: new Date(),
+  });
+
+  newCard?.friend_list?.push({
+    friend: invitedCard,
+    from: '',
+    time_stamp: new Date(),
+  });
+
+  user?.cards.push(newCard);
+
+  await invitedCard.save();
+  await newCard.save();
+  await user.save();
+
+  // console.log("invitedCard", invitedCard)
+  // console.log("new Card", newCard)
+
+  // console.log(invitedCard)
+  const tempCard = await tempCardModel.findByIdAndDelete(temp_card_id);
+
+  if (!tempCard) {
+    return next(new ErrorHandler(404, 'Temporary card not found or already deleted!'));
+  }
+  // console.log("delete temp card ", tempCard);
+
+  return res.status(200).json({
+    status: true,
+    data: newCard?._id,
+  });
+});
 
 exports.unfriendMutualFriend = catchAsync(async (req, res, next) => {
   const { own_id, remove_friend_id } = req.body;
 
   const ownCard = await cardModel.findById(own_id);
   if (!ownCard) {
-    return next(new ErrorHandler(404, "Something Wrong with your Card"));
+    return next(new ErrorHandler(404, 'Something Wrong with your Card'));
   }
 
   // Use $pull operator to remove the specified friend
@@ -697,7 +626,7 @@ exports.unfriendMutualFriend = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    message: "Friend removed successfully",
+    message: 'Friend removed successfully',
   });
 });
 
@@ -706,18 +635,14 @@ exports.unfriendTempCardMutualFriend = catchAsync(async (req, res, next) => {
 
   const ownCard = await cardModel.findById(own_id);
   if (!ownCard) {
-    return next(new ErrorHandler(404, "Your Card not found"));
+    return next(new ErrorHandler(404, 'Your Card not found'));
   }
 
   // Use $pull operator to remove the specified friend
-  const tempCardDelete = await tempCardModel.findByIdAndDelete(
-    remove_friend_id
-  );
+  const tempCardDelete = await tempCardModel.findByIdAndDelete(remove_friend_id);
 
   if (!tempCardDelete) {
-    return next(
-      new ErrorHandler(404, "Temporary Card not found or already deleted!")
-    );
+    return next(new ErrorHandler(404, 'Temporary Card not found or already deleted!'));
   }
 
   console.log(tempCardDelete);
@@ -727,12 +652,12 @@ exports.unfriendTempCardMutualFriend = catchAsync(async (req, res, next) => {
 
   const emailMessage = `I am sorry to delete your invitation`;
 
-  const emailSubject = "NetWorth";
+  const emailSubject = 'NetWorth';
   const emailSend = await SendEmailUtils(email, emailMessage, emailSubject);
 
   res.status(200).json({
     success: true,
-    message: "Temporary Friend removed successfully",
+    message: 'Temporary Friend removed successfully',
   });
 });
 
@@ -740,15 +665,14 @@ exports.sendInvitationViaEmail = catchAsync(async (req, res, next) => {
   const { email, link } = req.body;
 
   const emailMessage = `You have been invited to join NetWorth. Please click on the following link to accept the invitation: ${link}`;
-  const emailSubject = "NetWorth";
+  const emailSubject = 'NetWorth';
   const emailSend = await SendEmailUtils(email, emailMessage, emailSubject);
 
   res.status(200).json({
     success: true,
-    message: "Invitation sent successfully via email",
+    message: 'Invitation sent successfully via email',
   });
-
-})
+});
 
 exports.friendViaQrCode = catchAsync(async (req, res, next) => {
   const { sender_id, receiver_id } = req.body;
@@ -756,11 +680,11 @@ exports.friendViaQrCode = catchAsync(async (req, res, next) => {
   const sender = await cardModel.findById(sender_id);
   const receiver = await cardModel.findById(receiver_id);
   if (!sender) {
-    return next(new ErrorHandler(404, "Sender Card not found"));
+    return next(new ErrorHandler(404, 'Sender Card not found'));
   }
 
   if (!receiver) {
-    return next(new ErrorHandler(404, "Receiver Card not found"));
+    return next(new ErrorHandler(404, 'Receiver Card not found'));
   }
 
   const receiverIsConnected = sender?.friend_list?.some((friend) => {
@@ -770,66 +694,54 @@ exports.friendViaQrCode = catchAsync(async (req, res, next) => {
   if (receiverIsConnected) {
     return res.status(200).json({
       status: true,
-      message: "You are already connected with this card",
+      message: 'You are already connected with this card',
     });
   }
 
-  const incomingRequestExists = await sender.incoming_friend_request.includes(
-    receiver_id
-  );
+  const incomingRequestExists = await sender.incoming_friend_request.includes(receiver_id);
 
-  const outgoingRequest = await sender.outgoing_friend_request.includes(
-    receiver_id
-  );
+  const outgoingRequest = await sender.outgoing_friend_request.includes(receiver_id);
 
   if (incomingRequestExists) {
-    sender.incoming_friend_request = sender.incoming_friend_request.filter(
-      (id) => id.toString() !== receiver_id
-    );
-    receiver.outgoing_friend_request = receiver.outgoing_friend_request.filter(
-      (id) => id.toString() !== sender_id
-    );
+    sender.incoming_friend_request = sender.incoming_friend_request.filter((id) => id.toString() !== receiver_id);
+    receiver.outgoing_friend_request = receiver.outgoing_friend_request.filter((id) => id.toString() !== sender_id);
     sender.friend_list.push({
       friend: receiver,
-      from: "",
+      from: '',
       time_stamp: new Date(),
     });
     receiver.friend_list.push({
       friend: sender,
-      from: "",
+      from: '',
       time_stamp: new Date(),
     });
-  }else if (outgoingRequest) {
-    sender.outgoing_friend_request = sender.outgoing_friend_request.filter(
-      (id) => id.toString() !== receiver_id
-    );
-    receiver.incoming_friend_request = receiver.incoming_friend_request.filter(
-      (id) => id.toString() !== sender_id
-    );
+  } else if (outgoingRequest) {
+    sender.outgoing_friend_request = sender.outgoing_friend_request.filter((id) => id.toString() !== receiver_id);
+    receiver.incoming_friend_request = receiver.incoming_friend_request.filter((id) => id.toString() !== sender_id);
     // Add receiver to sender's friend list
     sender.friend_list.push({
       friend: receiver,
-      from: "",
+      from: '',
       time_stamp: new Date(),
     });
 
     // Add sender to receiver's friend list
     receiver.friend_list.push({
       friend: sender,
-      from: "",
+      from: '',
       time_stamp: new Date(),
     });
   } else {
     sender.friend_list.push({
       friend: receiver,
-      from: "",
+      from: '',
       time_stamp: new Date(),
     });
 
     // Add sender to receiver's friend list
     receiver.friend_list.push({
       friend: sender,
-      from: "",
+      from: '',
       time_stamp: new Date(),
     });
   }
@@ -840,6 +752,6 @@ exports.friendViaQrCode = catchAsync(async (req, res, next) => {
 
   return res.status(200).json({
     status: true,
-    message: "Friendship established successfully",
+    message: 'Friendship established successfully',
   });
 });

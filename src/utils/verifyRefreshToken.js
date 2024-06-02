@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken'); 
+const jwt = require('jsonwebtoken');
 
 exports.verifyRefresh = async (refreshToken) => {
   try {
@@ -8,7 +8,7 @@ exports.verifyRefresh = async (refreshToken) => {
     const decoded = jwt.verify(refreshTokenKey, process.env.JWT_REFRESH_SECRET);
 
     // Check if the token is not expired
-    const currentTime = Math.floor(Date.now() / 1000); 
+    const currentTime = Math.floor(Date.now() / 1000);
     if (decoded.iat && decoded.exp && decoded.exp > currentTime) {
       return { valid: true, userId: decoded.userId };
     } else {
@@ -18,6 +18,3 @@ exports.verifyRefresh = async (refreshToken) => {
     return { valid: false };
   }
 };
-
-
-
