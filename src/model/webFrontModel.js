@@ -87,7 +87,7 @@ const webFrontSchema = mongoose.Schema({
         required: true,
       },
     },
-     second: {
+    second: {
       image1: {
         type: String,
         required: true,
@@ -97,7 +97,7 @@ const webFrontSchema = mongoose.Schema({
         required: true,
       },
     },
-      third: {
+    third: {
       image1: {
         type: String,
         required: true,
@@ -106,8 +106,8 @@ const webFrontSchema = mongoose.Schema({
         type: String,
         required: true,
       },
-    }
-  }
+    },
+  },
 });
 
 const webFrontModel = mongoose.model('WebFront', webFrontSchema);
