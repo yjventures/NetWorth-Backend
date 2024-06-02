@@ -133,18 +133,10 @@ exports.updateWebFront = catchAsync(async (req, res, next) => {
   let webFront = await webFrontModel.findOne();
   // console.log(webFront);
 
-  if (!webFront) {
-    webFront = await webFrontModel.create({ ...initValues });
+  if (webFront) {
+    // const updatedData = { req.body };
 
-    res.status(200).json({
-      success: true,
-      data: webFront,
-    });
-  } else {
-    // Merge existing webFront data with incoming request data
-    const updatedData = { ...webFront.toObject(), ...req.body };
-
-    const updatedWebFront = await webFrontModel.findByIdAndUpdate(webFront._id, updatedData, {
+    const updatedWebFront = await webFrontModel.findByIdAndUpdate(webFront._id, req.body, {
       new: true,
       runValidators: true,
     });
@@ -153,6 +145,17 @@ exports.updateWebFront = catchAsync(async (req, res, next) => {
       success: true,
       data: updatedWebFront,
     });
+  } else {
+    const createwebFront = await webFrontModel.create(req.body);
+
+    if(!createwebFront){
+      return next(new ErrorHandler(400, 'webFront creation failed'));
+    }
+
+    return res.status(201).json({
+      success: true,
+      data: createwebFront
+    })
   }
 });
 
@@ -170,7 +173,6 @@ exports.getWebFront = catchAsync(async (req, res, next) => {
     case 'logo':
       responseData = {
         logo: webFront.logo,
-        
       };
       break;
     case 'patterns':
