@@ -337,7 +337,8 @@ exports.addAdminTeamMember = async (req, res) => {
       // Send a confirmation email to the user
       const emailMessage = `your temp password is  ${passwordCode} <br/> Click here to confirm your invitation as Admin: ${confirmationToken}`;
 
-      const emailSubject = 'NetworthHub System Invitation Account Confirmation';
+      // const emailSubject = 'NetworthHub System Invitation Account Confirmation';
+      const emailSubject = 'NetWorth'
       const emailSend = await SendEmailUtils(newMemberInfo.email, emailMessage, emailSubject);
       newMemberInfo.password = undefined;
       res.status(200).json({
