@@ -33,6 +33,10 @@ const variablesSchema = mongoose.Schema(
 
 // Define the web front schema
 const webFrontSchema = mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+  },
   logo: {
     defaultLogo: {
       type: String,

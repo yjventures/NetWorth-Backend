@@ -3,6 +3,7 @@ const webFrontModel = require('../model/webFrontModel');
 const ErrorHandler = require('../utils/errorHandler');
 
 const initValues = {
+  title: 'NetWorth',
   logo: {
     defaultLogo:
       'http://rfqbucket.s3-website-ap-southeast-2.amazonaws.com/fb7036d87073ebd8c56b2713626922b65f2f6b1d5a92965656a2ce1179731d5c.jpeg',
@@ -172,6 +173,7 @@ exports.getWebFront = catchAsync(async (req, res, next) => {
     case 'logo':
       responseData = {
         logo: webFront.logo,
+        title: webFront.title,
       };
       break;
     case 'patterns':
