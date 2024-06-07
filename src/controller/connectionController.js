@@ -676,6 +676,15 @@ exports.sendInvitationViaEmail = catchAsync(async (req, res, next) => {
 
 exports.friendViaQrCode = catchAsync(async (req, res, next) => {
   const { sender_id, receiver_id } = req.body;
+  if (sender_id === receiver_id) {
+    return next(new ErrorHandler(400, 'You can not connect yourself'));
+  }
+  const senderUser = await userModel.findOne({ cards: sender_id });
+  const receiverUser = await userModel.find({ cards: receiver_id });
+
+  if (senderUser === receiverUser) {
+    return next(new ErrorHandler(400, 'You can not connect yourself'));
+  }
 
   const sender = await cardModel.findById(sender_id);
   const receiver = await cardModel.findById(receiver_id);
