@@ -680,3 +680,115 @@ exports.checkExistingUserByToken = catchAsync(async (req, res, next) => {
     message: 'user found',
   });
 });
+
+exports.deleteOwnUserAccount = catchAsync(async (req, res, next) => {
+  const userId = req.params.userId;
+  const user = await userModel.findById(userId);
+  if (!user) {
+    return next(new ErrorHandler(404, 'This User Not Found'));
+  }
+
+  // Get the personal_info id from the user document
+  const personalInfoId = user.personal_info;
+
+  // Delete the personal information from the personalInfoModel
+  await personalInfoModel.findByIdAndDelete(personalInfoId);
+
+  // Get all the cards associated with the user
+  const userCards = user.cards;
+
+  // Loop through each card
+  for (const cardId of userCards) {
+    const card = await cardModel.findById(cardId);
+
+    if (!card) {
+      // If card not found, continue to next card
+      continue;
+    }
+
+    // Delete all notifications associated with the card
+    // const notificationsToDelete = card.notifications;
+    // await Promise.all(
+    //   notificationsToDelete.map(async (notificationId) => {
+    //     await notificationModel.findByIdAndDelete(notificationId);
+    //   })
+    // );
+
+    // Delete all links associated with the card
+    const linksToDelete = card.links;
+    await Promise.all(
+      linksToDelete.map(async (linkId) => {
+        await linkModel.findByIdAndDelete(linkId);
+      }),
+    );
+
+    // Delete all activities associated with the card
+    const activitiesToDelete = card.activities;
+    await Promise.all(
+      activitiesToDelete.map(async (activityId) => {
+        await activityModel.findByIdAndDelete(activityId);
+      }),
+    );
+
+    // Delete the card
+    await cardModel.findByIdAndDelete(cardId);
+
+    // Remove references to this card from other cards' friend_list, incoming_friend_request, and outgoing_friend_request arrays
+    const cardsToUpdate = await cardModel.find({
+      $or: [{ 'friend_list.friend': cardId }, { incoming_friend_request: cardId }, { outgoing_friend_request: cardId }],
+    });
+
+    // console.log("cardsToUpdate", cardsToUpdate);
+    await Promise.all(
+      cardsToUpdate.map(async (cardToUpdate) => {
+        if (cardToUpdate.friend_list.some((friend) => friend.friend?._id.toString() === cardId.toString())) {
+          await cardModel.findByIdAndUpdate(cardToUpdate._id, {
+            $pull: { friend_list: { friend: cardId } },
+          });
+        }
+
+        if (cardToUpdate.incoming_friend_request.includes(cardId)) {
+          cardToUpdate.incoming_friend_request = cardToUpdate.incoming_friend_request.filter(
+            (requestId) => requestId.toString() !== cardId,
+          );
+        }
+
+        if (cardToUpdate.outgoing_friend_request.includes(cardId)) {
+          cardToUpdate.outgoing_friend_request = cardToUpdate.outgoing_friend_request.filter(
+            (requestId) => requestId.toString() !== cardId,
+          );
+        }
+
+        // console.log("before deletation", cardToUpdate.notifications.length)
+        cardToUpdate.notifications = cardToUpdate.notifications.filter((notification) => {
+          return !(notification.sender === cardId && notification.receiver === cardToUpdate._id);
+        });
+        // console.log("after deletation", cardToUpdate.notifications.length)
+
+        await notificationModel.deleteMany({
+          $or: [{ sender: cardId }, { receiver: cardId }],
+        });
+
+        await cardToUpdate.save();
+      }),
+    );
+  }
+
+  // Delete the user
+  await userModel.findByIdAndDelete(userId);
+
+  // Send email to the user
+  // const emailMessage = `Sorry, Your account has been Deleted from NetWorth Hub`;
+  // const emailSubject = "NetWorth";
+  // const emailSend = await SendEmailUtils(
+  //   user.email,
+  //   emailMessage,
+  //   emailSubject
+  // );
+
+  return res.status(200).json({
+    status: true,
+    message: 'Successfully Deleted The User',
+    data: user,
+  });
+});
