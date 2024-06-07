@@ -5,9 +5,9 @@ const linkSchema = mongoose.Schema(
     platform: {
       type: String,
     },
-    link: {
+    link: [{
       type: String,
-    },
+    }],
   },
   {
     versionKey: false,
