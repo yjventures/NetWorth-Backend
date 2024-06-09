@@ -281,43 +281,28 @@ exports.deleteActivityByIdd = catchAsync(async (req, res, next) => {
 });
 exports.createLink = catchAsync(async (req, res, next) => {
   const cardId = req.params.cardId;
-  const { platform, link } = req.body;
+  const reqBody = req.body;
 
-  const card = await cardModel.findById(cardId).populate('links');
+  const card = await cardModel.findById(cardId);
   if (!card) {
     return next(new ErrorHandler(404, 'The Card is not found'));
   }
 
-  // Find an existing link with the specified platform in the card's links
-  let existingLink = card.links.find(l => l.platform === platform);
+  const link = await linkModel.create(reqBody);
 
-  if (existingLink) {
-    // If the platform exists, update the link array
-    const existingLinkDoc = await linkModel.findById(existingLink._id);
-    existingLinkDoc.link = [...new Set([...existingLinkDoc.link, ...link])]; // Avoid duplicates
-    await existingLinkDoc.save();
-    existingLink = existingLinkDoc; // Update the existingLink reference
-  } else {
-    // If the platform does not exist, create a new link
-    const newLinkData = {
-      platform,
-      link,
-    };
-    const newLink = await linkModel.create(newLinkData);
-    card.links.push(newLink._id);
-    existingLink = newLink;
+  if (!link) {
+    return next(new ErrorHandler(404, 'Something Is Wrong With Link Creation'));
   }
 
+  card.links.push(link._id);
   await card.save();
 
   return res.status(200).json({
     status: true,
     message: 'Link has been added to the card',
-    data: existingLink,
+    data: link,
   });
 });
-
-
 
 //get all links
 exports.getAllLink = catchAsync(async (req, res, next) => {
