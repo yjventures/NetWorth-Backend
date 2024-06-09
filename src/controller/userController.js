@@ -682,7 +682,7 @@ exports.checkExistingUserByToken = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteOwnUserAccount = catchAsync(async (req, res, next) => {
-  const userId = req.params.userId;
+  const userId = req.headers.userId;
   const user = await userModel.findById(userId);
   if (!user) {
     return next(new ErrorHandler(404, 'This User Not Found'));
