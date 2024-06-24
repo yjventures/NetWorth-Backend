@@ -539,6 +539,10 @@ exports.showAllActivities = catchAsync(async (req, res, next) => {
 //show all friend
 exports.showFriendListForCard = catchAsync(async (req, res, next) => {
   const id = req.params.id;
+  const userId = req.headers.userId;
+
+  const userCards = await userModel.findById(userId).populate('cards');
+  const userCardIds = user.cards.map((card) => card._id.toString());
 
   const card = await cardModel.findById(id).populate({
     path: 'friend_list',
@@ -562,7 +566,11 @@ exports.showFriendListForCard = catchAsync(async (req, res, next) => {
 
   const tempCards = await tempCardModel.find({ invited_card: id });
 
-  const friendListArray = card?.friend_list;
+  //older one
+  // const friendListArray = card?.friend_list;
+  //new one
+  const friendListArray = card?.friend_list?.filter((friend) => !userCardIds?.includes(friend?._id.toString()));
+
   return res.status(200).json({
     status: true,
     data: { cards: friendListArray, tempCards },
