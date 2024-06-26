@@ -625,13 +625,13 @@ exports.unfriendMutualFriend = catchAsync(async (req, res, next) => {
   });
 
   //add this for delete the notifications also
-  await notificationModel.deleteMany({
-    $or: [{ sender: own_id }, { receiver: remove_friend_id }],
-  });
+  // await notificationModel.deleteMany({
+  //   $or: [{ sender: own_id }, { receiver: remove_friend_id }],
+  // });
 
-  await notificationModel.deleteMany({
-    $or: [{ sender: remove_friend_id }, { receiver: own_id }],
-  });
+  // await notificationModel.deleteMany({
+  //   $or: [{ sender: remove_friend_id }, { receiver: own_id }],
+  // });
 
   res.status(200).json({
     success: true,
