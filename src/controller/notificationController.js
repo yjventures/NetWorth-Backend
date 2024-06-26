@@ -28,9 +28,12 @@ exports.showAllNotifications = catchAsync(async (req, res, next) => {
       }))
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
+    // Limit to 20 notifications
+    const limitedNotifications = formattedNotifications.slice(0, 4);
+
     return res.status(200).json({
       status: true,
-      data: formattedNotifications,
+      data: limitedNotifications,
     });
   } catch (error) {
     return next(new ErrorHandler(500, 'Something Wrong with Card'));
