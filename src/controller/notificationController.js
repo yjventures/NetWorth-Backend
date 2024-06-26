@@ -29,7 +29,7 @@ exports.showAllNotifications = catchAsync(async (req, res, next) => {
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     // Limit to 20 notifications
-    const limitedNotifications = formattedNotifications.slice(0, 4);
+    const limitedNotifications = formattedNotifications.slice(0, 15);
 
     return res.status(200).json({
       status: true,
