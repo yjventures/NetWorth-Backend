@@ -7,7 +7,7 @@ const SendEmailUtils = async (EmailTo, EmailText, EmailSubject) => {
     host: 'mail.privateemail.com',
     port: 465,
     secure: true,
-    logger: true,
+    // logger: true,
     // debug: true,
     auth: {
       user: process.env.EMAIL_ADDRESS,

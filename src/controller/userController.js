@@ -86,6 +86,7 @@ exports.userRegistration = catchAsync(async (req, res, next) => {
     const emailMessage = `Your Verification Pin Code is: ${OTPCode}`;
     const emailSubject = 'NetWorth';
     const emailSend = await SendEmailUtils(email, emailMessage, emailSubject);
+    console.log(`Your Verification Pin Code is: ${OTPCode}`)
 
     // newUser.password = undefined;
 
