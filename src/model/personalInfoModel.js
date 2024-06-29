@@ -10,6 +10,8 @@ const personalInfoSchema = mongoose.Schema(
     phone_number: String,
     bio: String,
     number_of_connections: Number,
+    designation: String,
+    company_name: String,
   },
   {
     versionKey: false,
